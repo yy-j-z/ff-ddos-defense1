@@ -1,0 +1,10 @@
+node_modules
+.next
+drizzle
+*.log
+.DS_Store
+next-env.d.ts
+*.tsbuildinfo
+
+# 注意:本仓库为私有,应用户要求提交 .env / .env.local(含真实密钥)。
+# 若日后转为公开仓库,务必先用 git filter-repo 清除历史中的密钥并吊销 key。

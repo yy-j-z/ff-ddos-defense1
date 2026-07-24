@@ -1,0 +1,121 @@
+services:
+  web:
+    build: ./web
+    container_name: ff-web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://postgres:dev123@postgres:5432/ff
+      REDIS_URL: ${REDIS_URL}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
+      DEFENDER_URL: ${DEFENDER_URL}
+      TARGET_URL: ${TARGET_URL}
+      PCAP_ANALYZER_URL: http://pcap-analyzer:8001
+      AUTH_PASSWORD: ${AUTH_PASSWORD}
+      AUTH_SECRET: ${AUTH_SECRET}
+      DEFENDER_LOG_PATH: /var/log/defender/defender.log
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      # 挂载 defender 的拦截日志卷(只读),供 Verifier 实时读取真实防御日志
+      - defender-logs:/var/log/defender:ro
+    networks:
+      - app-net
+
+  postgres:
+    image: pgvector/pgvector:pg16
+    container_name: ff-postgres
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: dev123
+      POSTGRES_DB: ff
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - app-net
+
+  redis:
+    image: redis:7-alpine
+    container_name: ff-redis
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks:
+      - app-net
+
+  pcap-analyzer:
+    build: ./services/analyzer
+    container_name: ff-pcap-analyzer
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8001:8001"
+    environment:
+      PORT: "8001"
+    networks:
+      - app-net
+
+  attacker-worker:
+    build: ./services/attacker
+    container_name: ff-attacker-worker
+    restart: unless-stopped
+    environment:
+      REDIS_URL: ${REDIS_URL}
+      TARGET_URL: ${TARGET_URL}
+      DEFENDER_URL: ${DEFENDER_URL}
+    depends_on:
+      redis:
+        condition: service_healthy
+    networks:
+      - app-net
+      - attack-net
+
+  target:
+    image: nginx:alpine
+    container_name: ff-target
+    restart: unless-stopped
+    volumes:
+      - ./targets/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - attack-net
+
+  defender:
+    build: ./targets/defender
+    container_name: ff-defender
+    restart: unless-stopped
+    volumes:
+      - defender-logs:/var/log
+    depends_on:
+      - target
+    networks:
+      - attack-net
+
+networks:
+  app-net:
+    driver: bridge
+  attack-net:
+    driver: bridge
+    internal: true
+
+volumes:
+  postgres-data:
+  defender-logs:

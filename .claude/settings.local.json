@@ -1,0 +1,33 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(docker --version; node --version; python --version)",
+      "PowerShell(docker version *)",
+      "PowerShell(docker --version; docker ps)",
+      "PowerShell(docker run *)",
+      "PowerShell(docker network create *)",
+      "PowerShell(docker run -d --name ff-target --network ff-net --network-alias target -v \"${PWD}/targets/nginx.conf:/etc/nginx/nginx.conf:ro\" -p 8090:80 nginx:alpine)",
+      "PowerShell(docker build *)",
+      "PowerShell(docker exec *)",
+      "PowerShell(docker cp D:\\\\ff-main\\\\db\\\\seed.sql ff-postgres:/tmp/seed.sql; docker exec -i ff-postgres psql -U postgres -d ff -f /tmp/seed.sql)",
+      "PowerShell(cd D:\\\\ff-main\\\\services\\\\analyzer; $env:REDIS_URL = \"redis://localhost:6379\"; .\\\\.venv\\\\Scripts\\\\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8001)",
+      "PowerShell(cd D:\\\\ff-main\\\\services\\\\attacker; $env:REDIS_URL = \"redis://localhost:6379\"; $env:PYTHONPATH = \".\"; .\\\\.venv\\\\Scripts\\\\python.exe worker.py)",
+      "PowerShell(Start-Sleep -Seconds 5; Write-Host \"=== Web \\(3000\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Analyzer \\(8001\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8001/docs -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Defender \\(8080\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8080/api/products -UserAgent \"Mozilla/5.0\" -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Target \\(8090\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8090/ -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message })",
+      "PowerShell(try { \\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 30\\).StatusCode } catch { $_.Exception.Message })",
+      "PowerShell(Write-Host \"=== Defender UA blacklist test ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8080/api/products -UserAgent \"curl/8.0\" -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Response.StatusCode.value__ })",
+      "PowerShell(Write-Host \"=== Web \\(3000\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Analyzer \\(8001\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8001/docs -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Defender \\(8080\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8080/api/products -UserAgent \"Mozilla/5.0\" -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Containers ===\"; docker ps --filter name=ff- --format \"{{.Names}} {{.Status}}\")",
+      "PowerShell(Start-Sleep -Seconds 35; Write-Host \"=== Web \\(3000\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:3000 -UseBasicParsing -TimeoutSec 30\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== Analyzer \\(8001\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:8001/docs -UseBasicParsing -TimeoutSec 5\\).StatusCode } catch { $_.Exception.Message })",
+      "PowerShell(Write-Host \"=== /login \\(no auth env\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:3000/login -UseBasicParsing -TimeoutSec 30\\).StatusCode } catch { $_.Exception.Message }; Write-Host \"=== /dashboard \\(no auth env, should be 200 since AUTH_PASSWORD not set\\) ===\"; try { \\(Invoke-WebRequest -Uri http://localhost:3000/dashboard -UseBasicParsing -TimeoutSec 30 -MaximumRedirection 0\\).StatusCode } catch { $_.Exception.Response.StatusCode.value__ })",
+      "PowerShell(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('hex'\\)\\)\")",
+      "PowerShell(node -e \"const c=require\\('crypto'\\); console.log\\(c.randomBytes\\(12\\).toString\\('base64'\\).replace\\(/[+/=]/g,''\\).slice\\(0,16\\)\\)\")",
+      "PowerShell(node -e \"const c=require\\('crypto'\\); console.log\\(c.randomBytes\\(24\\).toString\\('base64'\\).replace\\(/[+/=]/g,''\\).slice\\(0,24\\)\\)\")",
+      "PowerShell(docker rm -f ff-postgres ff-redis ff-target ff-defender; docker network rm ff-net)",
+      "PowerShell(docker compose ps *)",
+      "PowerShell(docker exec -i ff-postgres psql -U postgres -d ff -c \"CREATE EXTENSION IF NOT EXISTS vector;\"; docker compose exec -T web npx drizzle-kit push --force 2>&1 | Select-Object -Last 10)",
+      "PowerShell($env:DATABASE_URL = \"postgres://postgres:R7ftmG5vsGH4dR7Mc8R6A3GG@localhost:5432/ff\"; cd D:\\\\ff-main\\\\web; npx drizzle-kit push --force 2>&1 | Select-Object -Last 6)",
+      "PowerShell(docker compose *)",
+      "PowerShell(docker cp D:\\\\ff-main\\\\web\\\\drizzle\\\\0000_loving_union_jack.sql ff-postgres:/tmp/schema.sql; docker exec ff-postgres psql -U postgres -d ff -f /tmp/schema.sql 2>&1 | Select-Object -Last 15)",
+      "PowerShell(docker cp D:\\\\ff-main\\\\db\\\\seed.sql ff-postgres:/tmp/seed.sql; docker exec ff-postgres psql -U postgres -d ff -f /tmp/seed.sql 2>&1 | Select-Object -Last 8)"
+    ]
+  }
+}
