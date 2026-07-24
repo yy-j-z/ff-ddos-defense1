@@ -13,6 +13,21 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ses
   const { sessionId } = await params;
 
   const encoder = new TextEncoder();
+
+  // 这些句柄在 start 内赋值,cancel(客户端断开)时用于清理,避免 listener/interval 泄漏。
+  let unsubscribe: (() => void) | null = null;
+  let keepAlive: ReturnType<typeof setInterval> | null = null;
+  let cleaned = false;
+
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    if (keepAlive) clearInterval(keepAlive);
+    if (unsubscribe) unsubscribe();
+    keepAlive = null;
+    unsubscribe = null;
+  };
+
   const stream = new ReadableStream({
     start(controller) {
       const write = (event: SSEEvent) => {
@@ -23,59 +38,47 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ses
         }
       };
 
+      const closeStream = () => {
+        cleanup();
+        try {
+          controller.close();
+        } catch {
+          // ignore
+        }
+      };
+
       // 初始注释行,让浏览器立刻打开通道
       controller.enqueue(encoder.encode(`: connected ${sessionId}\n\n`));
 
-      const unsubscribe = sessionBus.subscribe(sessionId, (ev) => {
+      unsubscribe = sessionBus.subscribe(sessionId, (ev) => {
         write(ev);
         if (
           ev.type === 'session.completed' ||
           ev.type === 'session.stopped' ||
           ev.type === 'error'
         ) {
-          // 给客户端一点时间收到再关
-          setTimeout(() => {
-            try {
-              controller.close();
-            } catch {
-              // ignore
-            }
-          }, 50);
+          // 给客户端一点时间收到再关(同时清理订阅与心跳)
+          setTimeout(closeStream, 50);
         }
       });
 
       // 心跳,防止代理断连
-      const keepAlive = setInterval(() => {
+      keepAlive = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(`: ping\n\n`));
         } catch {
-          clearInterval(keepAlive);
+          cleanup();
         }
       }, 15000);
 
       // 已经是 closed 状态,主动关
       if (sessionBus.isClosed(sessionId)) {
-        setTimeout(() => {
-          clearInterval(keepAlive);
-          unsubscribe();
-          try {
-            controller.close();
-          } catch {
-            // ignore
-          }
-        }, 50);
+        setTimeout(closeStream, 50);
       }
-
-      // cleanup on cancel
-      (controller as unknown as { _ff_cleanup?: () => void })._ff_cleanup = () => {
-        clearInterval(keepAlive);
-        unsubscribe();
-      };
     },
     cancel() {
-      // ReadableStream cancel 时清理
-      // 注:此处拿不到 controller,但 unsubscribe 已通过闭包绑定到 start 内,无法直接调用。
-      // EventEmitter 多余监听器在进程内不会泄漏太严重,且 maxListeners=1000。
+      // 客户端断开时触发:解绑 bus 监听并清除心跳,防止泄漏。
+      cleanup();
     }
   });
 

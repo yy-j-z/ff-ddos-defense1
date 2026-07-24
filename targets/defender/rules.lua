@@ -37,11 +37,20 @@ local LOGIN_PATHS = {
     ["/api/register"] = true,
 }
 
+-- Rate limiting keys on the real TCP peer (remote_addr) only.
+-- X-Forwarded-For is client-supplied and trivially forged, so keying limits on
+-- it lets an attacker rotate a fake XFF per request and appear as a new IP each
+-- time, defeating the limiter. If this defender is ever placed behind a trusted
+-- reverse proxy, set TRUST_XFF=1 in its env AND restrict who can reach it.
+local TRUST_XFF = (os.getenv("TRUST_XFF") == "1")
+
 local function client_ip()
-    local xff = ngx.var.http_x_forwarded_for
-    if xff and xff ~= "" then
-        local first = xff:match("([^,%s]+)")
-        if first then return first end
+    if TRUST_XFF then
+        local xff = ngx.var.http_x_forwarded_for
+        if xff and xff ~= "" then
+            local first = xff:match("([^,%s]+)")
+            if first then return first end
+        end
     end
     return ngx.var.remote_addr or "unknown"
 end

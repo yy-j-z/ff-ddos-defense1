@@ -8,6 +8,11 @@ export interface ScopeCheckResult {
   violations: string[];
 }
 
+// 强度硬上限 —— 与 attacker worker 的默认 env 上限保持一致,防止 LLM 生成的
+// requestsPerSecond / concurrentConnections 无限拉高。worker 侧仍会二次兜底。
+export const MAX_RPS = 5000;
+export const MAX_CONNECTIONS = 2000;
+
 export function checkPlaybookScope(playbook: AttackPlaybook, scope: Scope): ScopeCheckResult {
   const violations: string[] = [];
 
@@ -20,6 +25,17 @@ export function checkPlaybookScope(playbook: AttackPlaybook, scope: Scope): Scop
   if (playbook.parameters.durationSec > scope.maxDurationSec) {
     violations.push(
       `durationSec=${playbook.parameters.durationSec} 超过上限 ${scope.maxDurationSec}`
+    );
+  }
+
+  const rps = playbook.parameters.requestsPerSecond;
+  if (rps != null && rps > MAX_RPS) {
+    violations.push(`requestsPerSecond=${rps} 超过上限 ${MAX_RPS}`);
+  }
+
+  if (playbook.parameters.concurrentConnections > MAX_CONNECTIONS) {
+    violations.push(
+      `concurrentConnections=${playbook.parameters.concurrentConnections} 超过上限 ${MAX_CONNECTIONS}`
     );
   }
 
@@ -43,6 +59,12 @@ export function clampPlaybookToScope(playbook: AttackPlaybook, scope: Scope): At
   const clamped: AttackPlaybook = { ...playbook, parameters: { ...playbook.parameters } };
   if (clamped.parameters.durationSec > scope.maxDurationSec) {
     clamped.parameters.durationSec = scope.maxDurationSec;
+  }
+  if (clamped.parameters.requestsPerSecond != null && clamped.parameters.requestsPerSecond > MAX_RPS) {
+    clamped.parameters.requestsPerSecond = MAX_RPS;
+  }
+  if (clamped.parameters.concurrentConnections > MAX_CONNECTIONS) {
+    clamped.parameters.concurrentConnections = MAX_CONNECTIONS;
   }
   if (!scope.allowedStrategies.includes(clamped.strategy)) {
     clamped.strategy = scope.allowedStrategies[0];

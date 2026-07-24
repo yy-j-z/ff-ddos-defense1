@@ -23,6 +23,7 @@ import signal
 import traceback
 from datetime import datetime, timezone
 from typing import Any, Dict
+from urllib.parse import urlparse
 
 from strategies import MetricsCollector, build_result
 from strategies import http_flood, slowloris, syn_flood, hulk_flood, slow_headers
@@ -44,11 +45,83 @@ STRATEGIES = {
 }
 
 
+# ───────────────────────── Safety guards ────────────────────────────────
+# Defense-in-depth: the web orchestrator already forces targetUrl to DEFENDER_URL
+# and clamps scope, but the worker MUST NOT trust the job it pops off Redis.
+# Anyone able to enqueue a job could otherwise aim real attack traffic at an
+# arbitrary host or dial intensity to infinity. These limits are the last line.
+def _allowed_hosts() -> set[str]:
+    raw = os.getenv("ATTACK_ALLOWED_HOSTS", "defender,target,localhost,127.0.0.1")
+    return {h.strip().lower() for h in raw.split(",") if h.strip()}
+
+
+MAX_RPS = int(os.getenv("ATTACK_MAX_RPS", "5000"))
+MAX_CONNECTIONS = int(os.getenv("ATTACK_MAX_CONNECTIONS", "2000"))
+MAX_DURATION_SEC = int(os.getenv("ATTACK_MAX_DURATION_SEC", "300"))
+
+
+class TargetNotAllowed(Exception):
+    """Raised when a job targets a host outside the allowlist."""
+
+
+def _clamp_int(value: Any, default: int, lo: int, hi: int) -> int:
+    try:
+        n = int(value)
+    except (TypeError, ValueError):
+        n = default
+    return max(lo, min(hi, n))
+
+
+def sanitize_playbook(playbook: Dict[str, Any]) -> Dict[str, Any]:
+    """Enforce the target allowlist and clamp intensity params in place.
+
+    Raises TargetNotAllowed if the target host is not permitted — the job is
+    then rejected rather than executed.
+    """
+    params = playbook.get("parameters")
+    if not isinstance(params, dict):
+        params = {}
+        playbook["parameters"] = params
+
+    target_url = params.get("targetUrl", "http://defender:8080")
+    host = (urlparse(target_url).hostname or "").lower()
+    allowed = _allowed_hosts()
+    if host not in allowed:
+        raise TargetNotAllowed(
+            f"target host {host!r} (from {target_url!r}) not in allowlist {sorted(allowed)}"
+        )
+
+    params["durationSec"] = _clamp_int(params.get("durationSec", 30), 30, 1, MAX_DURATION_SEC)
+    params["concurrentConnections"] = _clamp_int(
+        params.get("concurrentConnections", 100), 100, 1, MAX_CONNECTIONS
+    )
+    if params.get("requestsPerSecond") is not None:
+        params["requestsPerSecond"] = _clamp_int(params.get("requestsPerSecond"), 50, 1, MAX_RPS)
+    return playbook
+
+
 async def run_playbook(job_data: Dict[str, Any]) -> Dict[str, Any]:
     session_id = job_data.get("sessionId", "unknown")
     playbook = job_data.get("playbook") or {}
     strategy = playbook.get("strategy")
     playbook_id = playbook.get("id", "unknown")
+
+    try:
+        playbook = sanitize_playbook(playbook)
+    except TargetNotAllowed as exc:
+        log.error("REJECTED session=%s playbook=%s: %s", session_id, playbook_id, exc)
+        return {
+            "playbookId": playbook_id,
+            "totalRequests": 0,
+            "successfulRequests": 0,
+            "blockedRequests": 0,
+            "errors": 1,
+            "avgLatencyMs": 0.0,
+            "startedAt": datetime.now(timezone.utc).isoformat(),
+            "finishedAt": datetime.now(timezone.utc).isoformat(),
+            "rawMetrics": [],
+            "rejected": str(exc),
+        }
 
     log.info("=" * 60)
     log.info("session=%s playbook=%s strategy=%s round=%s", session_id, playbook_id, strategy, playbook.get("round"))

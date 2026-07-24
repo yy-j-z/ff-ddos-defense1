@@ -7,7 +7,7 @@ services:
       - "127.0.0.1:3000:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://postgres:dev123@postgres:5432/ff
+      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-dev}@postgres:5432/${POSTGRES_DB:-ff}
       REDIS_URL: ${REDIS_URL}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
@@ -36,8 +36,8 @@ services:
       - "127.0.0.1:5432:5432"
     environment:
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: dev123
-      POSTGRES_DB: ff
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev}
+      POSTGRES_DB: ${POSTGRES_DB:-ff}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./db/init.sql:/docker-entrypoint-initdb.d/00-init.sql:ro
