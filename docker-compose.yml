@@ -7,7 +7,7 @@ services:
       - "0.0.0.0:3000:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://postgres:***@postgres:5432/ff
+      DATABASE_URL: postgres://postgres:iaiKhPNCXJO9NL6g@postgres:5432/ff
       REDIS_URL: ${REDIS_URL}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
