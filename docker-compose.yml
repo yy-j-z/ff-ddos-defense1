@@ -4,10 +4,10 @@ services:
     container_name: ff-web
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3000:3000"
+      - "0.0.0.0:3000:3000"
     environment:
       NODE_ENV: production
-      DATABASE_URL: postgres://postgres:${POSTGRES_PASSWORD:-dev}@postgres:5432/${POSTGRES_DB:-ff}
+      DATABASE_URL: postgres://postgres:***@postgres:5432/ff
       REDIS_URL: ${REDIS_URL}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}

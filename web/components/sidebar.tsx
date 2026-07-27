@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { cn } from '@/lib/utils';
 
 const items = [
@@ -24,6 +24,14 @@ const items = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function onLogout() {
+    await fetch('/api/logout', { method: 'POST' });
+    router.replace('/login');
+    router.refresh();
+  }
+
   return (
     <aside className="w-56 shrink-0 border-r border-border bg-surface">
       <div className="flex h-full flex-col">
@@ -51,6 +59,15 @@ export function Sidebar() {
             );
           })}
         </nav>
+
+        <div className="border-t border-border p-3">
+          <button
+            onClick={onLogout}
+            className="flex w-full items-center rounded-md px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-surface-muted hover:text-foreground"
+          >
+            退出登录
+          </button>
+        </div>
 
         <div className="border-t border-border px-5 py-3 text-[11px] leading-relaxed text-subtle-foreground">
           多 Agent 闭环
