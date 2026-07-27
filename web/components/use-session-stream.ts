@@ -38,12 +38,22 @@ function reduce(state: SessionStreamState, ev: SSEEvent): SessionStreamState {
     case 'profile.ready':
       next.profile = ev.profile;
       break;
-    case 'playbook.ready':
-      next.playbooks = [...state.playbooks, ev.playbook];
+    case 'playbook.ready': {
+      // 防止 SSE 回放时重复添加（已完成 session 的历史事件会重放）
+      const exists = state.playbooks.some((p) => p.id === ev.playbook.id);
+      if (!exists) {
+        next.playbooks = [...state.playbooks, ev.playbook];
+      }
       break;
-    case 'verification.done':
-      next.verifications = [...state.verifications, ev.result];
+    }
+    case 'verification.done': {
+      // 防止重复
+      const exists = state.verifications.some((v) => v.playbookId === ev.result.playbookId);
+      if (!exists) {
+        next.verifications = [...state.verifications, ev.result];
+      }
       break;
+    }
     case 'judge.decision':
       next.judge = ev.decision;
       next.activeAgent = null;
@@ -68,6 +78,7 @@ function reduce(state: SessionStreamState, ev: SSEEvent): SessionStreamState {
       break;
     case 'session.completed':
     case 'session.stopped':
+    case 'error':
       next.status = 'closed';
       next.activeAgent = null;
       break;
@@ -93,12 +104,16 @@ export function useSessionStream(
     metrics: seed.metrics ?? [],
     thinking: seed.thinking,
     activeAgent: null,
-    status: 'connecting'
+    // live=true → 等待 SSE 连接; live=false → 已完成,直接显示
+    status: live ? 'connecting' : 'closed'
   }));
   const esRef = useRef<EventSource | null>(null);
 
-  // SSE 实时推送
+  // SSE 实时推送 —— 仅对进行中的 session 建立连接
   useEffect(() => {
+    // 已完成的 session 无需 SSE,seed 数据已包含全部内容
+    if (!live) return;
+
     let cancelled = false;
 
     const es = new EventSource(`/api/stream/${sessionId}`);
@@ -126,7 +141,7 @@ export function useSessionStream(
       if (esRef.current) esRef.current.close();
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [sessionId]);
+  }, [sessionId, live]);
 
   // 兜底轮询 —— 每 2 秒拉一次数据,合并增量
   useEffect(() => {
@@ -139,12 +154,11 @@ export function useSessionStream(
       try {
         const res = await fetch(`/api/sessions/${sessionId}`);
         if (!res.ok) return;
-        const data = await res.json() as {
-          profile: BusinessProfile | null;
-          playbooks: AttackPlaybook[];
-          verifications: VerificationResult[];
-          judge: JudgeDecision | null;
-          traces: Array<{ agentName: string; thinking: string | null; createdAt: string; output: unknown }>;
+        const raw = await res.json() as {
+          profile: { data: BusinessProfile } | null;
+          playbooks: Array<{ data: AttackPlaybook }>;
+          verifications: Array<{ metrics: VerificationResult & { rawMetrics?: Array<{ ts: number; rps: number; blocked: number }> }; playbookId: string }>;
+          traces: Array<{ agentName: string; thinking: string | null; output: JudgeDecision | null }>;
           session: { status: string };
         };
 
@@ -153,26 +167,43 @@ export function useSessionStream(
         setState((prev) => {
           const next = { ...prev };
 
-          // 合并 playbooks (新增的追加)
-          if (data.playbooks && data.playbooks.length > prev.playbooks.length) {
-            next.playbooks = data.playbooks;
+          // 解析 playbooks（从 DB 行的 .data 字段提取）
+          if (raw.playbooks && raw.playbooks.length > prev.playbooks.length) {
+            next.playbooks = raw.playbooks.map((p) => p.data);
           }
-          // 合并 verifications
-          if (data.verifications && data.verifications.length > prev.verifications.length) {
-            next.verifications = data.verifications;
+          // 解析 verifications（从 DB 行的 .metrics 字段提取）
+          if (raw.verifications && raw.verifications.length > prev.verifications.length) {
+            next.verifications = raw.verifications.map((v) => {
+              const m = v.metrics;
+              return {
+                playbookId: m.playbookId ?? v.playbookId,
+                reachability: m.reachability,
+                avgLatencyMs: m.avgLatencyMs,
+                defenderTriggered: m.defenderTriggered,
+                defenderLatencyMs: m.defenderLatencyMs ?? null,
+                defenderRulesHit: m.defenderRulesHit ?? [],
+                totalRequests: m.totalRequests,
+                blockedRequests: m.blockedRequests,
+                businessImpact: m.businessImpact,
+                score: m.score
+              } as VerificationResult;
+            });
           }
-          // 合并 judge
-          if (data.judge) {
-            next.judge = data.judge;
+          // 解析 judge（从 traces 中找最后一条 judge 记录）
+          if (raw.traces) {
+            const judgeTrace = [...raw.traces].reverse().find((t) => t.agentName === 'judge');
+            if (judgeTrace?.output) {
+              next.judge = judgeTrace.output;
+            }
           }
-          // 合并 profile
-          if (data.profile) {
-            next.profile = data.profile;
+          // 解析 profile（从 DB 行的 .data 字段提取）
+          if (raw.profile?.data) {
+            next.profile = raw.profile.data;
           }
-          // 合并 thinking (traces)
-          if (data.traces && data.traces.length > 0) {
+          // 合并 thinking
+          if (raw.traces && raw.traces.length > 0) {
             const newThinking: ThinkingEntry[] = [];
-            for (const t of data.traces) {
+            for (const t of raw.traces) {
               if (t.thinking) {
                 newThinking.push({ agent: t.agentName as AgentName, text: t.thinking });
               }
@@ -182,10 +213,10 @@ export function useSessionStream(
             }
           }
           // 更新状态
-          if (data.session && (data.session.status === 'completed' || data.session.status === 'failed' || data.session.status === 'stopped')) {
+          if (raw.session && (raw.session.status === 'completed' || raw.session.status === 'failed' || raw.session.status === 'stopped')) {
             next.status = 'closed';
             next.activeAgent = null;
-          } else if (next.status === 'connecting' || next.status === 'closed') {
+          } else if (next.status === 'connecting') {
             next.status = 'live';
           }
 
