@@ -76,7 +76,7 @@ export function DashboardDefensePanel({
   ];
 
   return (
-    <div className="cyber-card" role="region" aria-label="防御韧性评估">
+    <div className="cyber-card h-full" role="region" aria-label="防御韧性评估">
       <div className="cyber-card-header">
         <TrendingUp className="w-4 h-4 text-emerald-400" aria-hidden="true" />
         <h2 className="cyber-title">防御韧性评估</h2>

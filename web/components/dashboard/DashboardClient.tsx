@@ -38,21 +38,23 @@ export function DashboardClient({
 
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
         <div className="mx-auto" style={{ maxWidth: '1920px' }}>
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
             {/* 左栏 4/12 */}
             <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
               <DashboardAgentPanel activeAgents={activeAgents} runningCount={runningCount} />
-              <DashboardTrafficPanel />
+              <div className="flex-1">
+                <DashboardTrafficPanel />
+              </div>
             </div>
 
             {/* 中栏 4/12 */}
             <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
-              <div style={{ minHeight: '360px', maxHeight: '420px' }}>
+              <div className="flex-1" style={{ minHeight: '360px' }}>
                 <DashboardNetworkViz runningCount={runningCount} />
               </div>
 
               {/* 运行中会话 */}
-              <div className="cyber-card flex-1">
+              <div className="cyber-card">
                 <div className="cyber-card-header">
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -106,13 +108,15 @@ export function DashboardClient({
             {/* 右栏 4/12 */}
             <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
               <DashboardAttackMatrix strategyStats={strategyStats} />
-              <DashboardDefensePanel
-                sessionCount={sessionCount}
-                runningCount={runningCount}
-                avgScore={avgScore}
-                avgReachability={avgReachability}
-                defenderTriggeredRatio={defenderTriggeredRatio}
-              />
+              <div className="flex-1">
+                <DashboardDefensePanel
+                  sessionCount={sessionCount}
+                  runningCount={runningCount}
+                  avgScore={avgScore}
+                  avgReachability={avgReachability}
+                  defenderTriggeredRatio={defenderTriggeredRatio}
+                />
+              </div>
             </div>
           </div>
         </div>

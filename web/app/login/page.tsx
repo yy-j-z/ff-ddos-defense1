@@ -110,27 +110,6 @@ export default function LoginPage() {
         }}
       />
 
-      {/* 浮动粒子 */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden">
-        {Array.from({ length: 15 }).map((_, i) => (
-          <div
-            key={i}
-            className="absolute w-1 h-1 rounded-full"
-            style={{
-              background:
-                i % 3 === 0
-                  ? 'rgba(239, 68, 68, 0.2)'
-                  : i % 3 === 1
-                    ? 'rgba(59, 130, 246, 0.2)'
-                    : 'rgba(6, 182, 212, 0.15)',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-              animation: `float-particle ${3 + Math.random() * 4}s linear ${Math.random() * 3}s infinite`
-            }}
-          />
-        ))}
-      </div>
-
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

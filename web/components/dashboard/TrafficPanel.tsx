@@ -24,7 +24,7 @@ export function DashboardTrafficPanel() {
   }, []);
 
   return (
-    <div className="cyber-card" role="region" aria-label="流量特征分析">
+    <div className="cyber-card h-full" role="region" aria-label="流量特征分析">
       <div className="cyber-card-header">
         <Activity className="w-4 h-4 text-cyan-400" aria-hidden="true" />
         <h2 className="cyber-title">流量特征分析</h2>
