@@ -50,26 +50,61 @@ const agentOrder = ['attacker', 'analyzer', 'verifier', 'judge'];
 const agentIcons: Record<string, React.ReactNode> = {
   attacker: (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="20" stroke="#ef4444" strokeWidth="2" fill="#1a0a0a" />
-      <text x="24" y="29" textAnchor="middle" fill="#ef4444" fontSize="18" fontWeight="bold">⚔</text>
+      {/* 六边形头盔 — 攻击型机器人 */}
+      <polygon points="24,4 40,13 40,35 24,44 8,35 8,13" stroke="#ef4444" strokeWidth="2" fill="#1a0a0a" />
+      <rect x="17" y="18" width="14" height="10" rx="2" stroke="#ef4444" strokeWidth="1.5" fill="none" />
+      <circle cx="20" cy="22" r="2" fill="#ef4444" />
+      <circle cx="28" cy="22" r="2" fill="#ef4444" />
+      <line x1="24" y1="18" x2="24" y2="12" stroke="#ef4444" strokeWidth="1.5" />
+      <path d="M20 30 Q24 34 28 30" stroke="#ef4444" strokeWidth="1.5" fill="none" />
+      <line x1="10" y1="8" x2="14" y2="12" stroke="#ef4444" strokeWidth="1.5" />
+      <line x1="38" y1="8" x2="34" y2="12" stroke="#ef4444" strokeWidth="1.5" />
+      <line x1="20" y1="12" x2="18" y2="8" stroke="#ef4444" strokeWidth="1.5" />
+      <line x1="28" y1="12" x2="30" y2="8" stroke="#ef4444" strokeWidth="1.5" />
     </svg>
   ),
   analyzer: (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="20" stroke="#3b82f6" strokeWidth="2" fill="#0a0a1a" />
-      <text x="24" y="29" textAnchor="middle" fill="#3b82f6" fontSize="18" fontWeight="bold">🔍</text>
+      {/* 方形护目镜 — 分析型机器人 */}
+      <rect x="8" y="8" width="32" height="32" rx="4" stroke="#3b82f6" strokeWidth="2" fill="#0a0a1a" />
+      <rect x="14" y="16" width="20" height="12" rx="2" stroke="#3b82f6" strokeWidth="1.5" fill="none" />
+      <circle cx="22" cy="22" r="4" fill="#3b82f6" opacity="0.3" />
+      <circle cx="22" cy="22" r="2" fill="#3b82f6" />
+      <path d="M32 28 L36 32" stroke="#3b82f6" strokeWidth="1.5" />
+      <rect x="24" y="13" width="2" height="4" rx="1" fill="#3b82f6" />
+      <rect x="20" y="29" width="2" height="4" rx="1" fill="#3b82f6" />
+      <line x1="12" y1="20" x2="14" y2="22" stroke="#3b82f6" strokeWidth="1" />
+      <line x1="34" y1="20" x2="36" y2="22" stroke="#3b82f6" strokeWidth="1" />
     </svg>
   ),
   verifier: (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
+      {/* 圆形护盾 — 验证型机器人 */}
       <circle cx="24" cy="24" r="20" stroke="#10b981" strokeWidth="2" fill="#0a1a0a" />
-      <text x="24" y="29" textAnchor="middle" fill="#10b981" fontSize="18" fontWeight="bold">✓</text>
+      <circle cx="24" cy="24" r="14" stroke="#10b981" strokeWidth="1.5" fill="none" opacity="0.3" />
+      <rect x="17" y="15" width="14" height="12" rx="3" stroke="#10b981" strokeWidth="1.5" fill="none" />
+      <circle cx="21" cy="20" r="1.5" fill="#10b981" />
+      <circle cx="27" cy="20" r="1.5" fill="#10b981" />
+      <path d="M20 27 Q24 32 28 27" stroke="#10b981" strokeWidth="1.5" fill="none" />
+      <path d="M19 33 L22 36 L29 29" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <line x1="15" y1="13" x2="17" y2="15" stroke="#10b981" strokeWidth="1" />
+      <line x1="33" y1="13" x2="31" y2="15" stroke="#10b981" strokeWidth="1" />
     </svg>
   ),
   judge: (
     <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
-      <circle cx="24" cy="24" r="20" stroke="#a855f7" strokeWidth="2" fill="#0f0a1a" />
-      <text x="24" y="29" textAnchor="middle" fill="#a855f7" fontSize="18" fontWeight="bold">⚖</text>
+      {/* 菱形法冠 — 裁决型机器人 */}
+      <polygon points="24,6 40,16 40,32 24,42 8,32 8,16" stroke="#a855f7" strokeWidth="2" fill="#0f0a1a" />
+      <rect x="16" y="14" width="16" height="12" rx="2" stroke="#a855f7" strokeWidth="1.5" fill="none" />
+      <circle cx="21" cy="19" r="1.5" fill="#a855f7" />
+      <circle cx="27" cy="19" r="1.5" fill="#a855f7" />
+      <path d="M20 26 Q24 30 28 26" stroke="#a855f7" strokeWidth="1.5" fill="none" />
+      {/* 天平元素 */}
+      <line x1="24" y1="10" x2="24" y2="14" stroke="#a855f7" strokeWidth="1.5" />
+      <line x1="16" y1="34" x2="20" y2="30" stroke="#a855f7" strokeWidth="1.5" />
+      <line x1="32" y1="34" x2="28" y2="30" stroke="#a855f7" strokeWidth="1.5" />
+      <line x1="14" y1="36" x2="18" y2="36" stroke="#a855f7" strokeWidth="1.5" strokeLinecap="round" />
+      <line x1="30" y1="36" x2="34" y2="36" stroke="#a855f7" strokeWidth="1.5" strokeLinecap="round" />
     </svg>
   )
 };
