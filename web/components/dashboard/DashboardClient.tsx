@@ -39,16 +39,16 @@ export function DashboardClient({
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
         <div className="mx-auto" style={{ maxWidth: '1920px' }}>
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-            {/* 左栏 4/12 */}
-            <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
+            {/* 左栏 3/12 */}
+            <div className="col-span-1 lg:col-span-3 flex flex-col gap-4">
               <DashboardAgentPanel activeAgents={activeAgents} runningCount={runningCount} />
               <div className="flex-1">
                 <DashboardTrafficPanel />
               </div>
             </div>
 
-            {/* 中栏 4/12 */}
-            <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
+            {/* 中栏 6/12 */}
+            <div className="col-span-1 lg:col-span-6 flex flex-col gap-4">
               <div className="flex-1" style={{ minHeight: '360px' }}>
                 <DashboardNetworkViz runningCount={runningCount} />
               </div>
@@ -105,8 +105,8 @@ export function DashboardClient({
               </div>
             </div>
 
-            {/* 右栏 4/12 */}
-            <div className="col-span-1 lg:col-span-4 flex flex-col gap-4">
+            {/* 右栏 3/12 */}
+            <div className="col-span-1 lg:col-span-3 flex flex-col gap-4">
               <DashboardAttackMatrix strategyStats={strategyStats} />
               <div className="flex-1">
                 <DashboardDefensePanel
