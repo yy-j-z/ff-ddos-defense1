@@ -313,11 +313,12 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
         await new Promise((r) => setTimeout(r, 1000));
         if (metricsDone) break;
         // 实时模拟指标(真实 Worker 执行时会覆盖)
+        const elapsed = Math.round((Date.now() - startMetricTs) / 1000);
         const rps = Math.round(50 + Math.random() * 200);
-        const blocked = Math.round(Math.random() * 60);
+        const blocked = Math.min(rps, Math.round(Math.random() * 60));
         sessionBus.publish(sessionId, {
           type: 'attack.metric', round,
-          ts: Date.now(), rps, blocked,
+          ts: elapsed, rps, blocked,
         });
       }
     })();
@@ -331,11 +332,12 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
         for (let i = 0; i < mockDuration / interval; i++) {
           await new Promise((r) => setTimeout(r, interval));
           if (metricsDone) break;
-          const rps = Math.round(50 + Math.random() * 200 + round * 30);
-          const blocked = Math.round(Math.random() * Math.max(5, 60 - round * 12));
+          const elapsed2 = Math.round((Date.now() - startMetricTs) / 1000);
+          const rps2 = Math.round(50 + Math.random() * 200 + round * 30);
+          const blocked2 = Math.min(rps2, Math.round(Math.random() * Math.max(5, 60 - round * 12)));
           sessionBus.publish(sessionId, {
             type: 'attack.metric', round,
-            ts: Date.now(), rps, blocked,
+            ts: elapsed2, rps: rps2, blocked: blocked2,
           });
         }
         jobResult = mockAttackJobResult(playbook);
@@ -347,16 +349,17 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
         } catch (err) {
           console.warn('[queue] 执行失败,使用 mock', err);
           // mock 期间也推实时指标
-          const mockDuration = 3000;
-          const interval = 1000;
-          for (let i = 0; i < mockDuration / interval; i++) {
-            await new Promise((r) => setTimeout(r, interval));
+          const mockDuration2 = 3000;
+          const interval2 = 1000;
+          for (let i = 0; i < mockDuration2 / interval2; i++) {
+            await new Promise((r) => setTimeout(r, interval2));
             if (metricsDone) break;
+            const elapsed3 = Math.round((Date.now() - startMetricTs) / 1000);
+            const rps3 = Math.round(50 + Math.random() * 200);
+            const blocked3 = Math.min(rps3, Math.round(Math.random() * 40));
             sessionBus.publish(sessionId, {
               type: 'attack.metric', round,
-              ts: Date.now(),
-              rps: Math.round(50 + Math.random() * 200),
-              blocked: Math.round(Math.random() * 40),
+              ts: elapsed3, rps: rps3, blocked: blocked3,
             });
           }
           jobResult = mockAttackJobResult(playbook);
@@ -368,12 +371,15 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
     }
 
     // 推一条最终汇总指标
+    const finalElapsed = Math.round((Date.now() - startMetricTs) / 1000);
+    const finalRps = Math.round((jobResult.totalRequests || 100) / Math.max(1, finalElapsed));
+    const finalBlocked = Math.min(finalRps, jobResult.blockedRequests || 0);
     sessionBus.publish(sessionId, {
       type: 'attack.metric',
       round,
-      ts: Date.now(),
-      rps: Math.round((jobResult.totalRequests || 100) / Math.max(1, (Date.now() - startMetricTs) / 1000)),
-      blocked: jobResult.blockedRequests || 0
+      ts: finalElapsed,
+      rps: finalRps,
+      blocked: finalBlocked
     });
 
     // ─── 3.3 Verifier 评分 ───

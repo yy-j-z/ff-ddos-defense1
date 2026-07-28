@@ -171,9 +171,11 @@ export function DashboardNetworkViz({ runningCount }: { runningCount: number }) 
         <Globe className="w-4 h-4 text-cyan-400" />
         <h2 className="cyber-title">网络攻防态势可视化</h2>
         <div className="ml-auto flex items-center gap-3">
-          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-cyan-400" /><span className="text-xs text-slate-400">正常流量</span></div>
-          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /><span className="text-xs text-slate-400">攻击流量</span></div>
-          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /><span className="text-xs text-slate-400">防御响应</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-cyan-400" /><span className="text-xs text-slate-400">WAF</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-emerald-400" /><span className="text-xs text-slate-400">业务服务器</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /><span className="text-xs text-slate-400">Red Agent</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-blue-500" /><span className="text-xs text-slate-400">Blue Agent</span></div>
+          <div className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-purple-500" /><span className="text-xs text-slate-400">Orchestrator</span></div>
         </div>
       </div>
 

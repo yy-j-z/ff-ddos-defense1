@@ -41,8 +41,19 @@ export function AttackChart({ data }: { data: MetricPoint[] }) {
             fontSize={11}
             tickMargin={8}
             tickFormatter={(v) => `${v}s`}
+            domain={['dataMin', 'dataMax']}
+            type="number"
+            label={{ value: '时间 (秒)', position: 'insideBottomRight', offset: -5, style: { fill: AXIS, fontSize: 10 } }}
           />
-          <YAxis stroke={AXIS} tickLine={false} axisLine={false} fontSize={11} width={36} />
+          <YAxis
+            stroke={AXIS}
+            tickLine={false}
+            axisLine={false}
+            fontSize={11}
+            width={36}
+            domain={[0, 'auto']}
+            tickFormatter={(v) => `${v}`}
+          />
           <Tooltip
             cursor={{ stroke: '#475569', strokeWidth: 1 }}
             contentStyle={{
