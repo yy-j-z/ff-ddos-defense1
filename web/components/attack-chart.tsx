@@ -16,10 +16,10 @@ export interface MetricPoint {
   blocked: number;
 }
 
-const AXIS = '#a1a1aa';
-const GRID = '#ededed';
-const RPS = '#3f3f46'; // 近黑灰:总流量
-const BLOCKED = '#dc2626'; // 红:被拦截
+const AXIS = '#64748b';
+const GRID = '#1e293b';
+const RPS = '#06b6d4';
+const BLOCKED = '#ef4444';
 
 export function AttackChart({ data }: { data: MetricPoint[] }) {
   return (
@@ -28,7 +28,7 @@ export function AttackChart({ data }: { data: MetricPoint[] }) {
         <AreaChart data={data} margin={{ top: 4, right: 8, left: -16, bottom: 0 }}>
           <defs>
             <linearGradient id="fillRps" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={RPS} stopOpacity={0.12} />
+              <stop offset="0%" stopColor={RPS} stopOpacity={0.2} />
               <stop offset="100%" stopColor={RPS} stopOpacity={0} />
             </linearGradient>
           </defs>
@@ -44,14 +44,14 @@ export function AttackChart({ data }: { data: MetricPoint[] }) {
           />
           <YAxis stroke={AXIS} tickLine={false} axisLine={false} fontSize={11} width={36} />
           <Tooltip
-            cursor={{ stroke: '#d4d4d8', strokeWidth: 1 }}
+            cursor={{ stroke: '#475569', strokeWidth: 1 }}
             contentStyle={{
-              background: '#ffffff',
-              border: '1px solid #e5e5e5',
+              background: '#0f172a',
+              border: '1px solid #1f2937',
               borderRadius: 6,
               fontSize: 12,
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-              color: '#18181b'
+              boxShadow: '0 4px 12px rgba(0,0,0,0.4)',
+              color: '#e2e8f0'
             }}
             labelFormatter={(v) => `t = ${v}s`}
           />

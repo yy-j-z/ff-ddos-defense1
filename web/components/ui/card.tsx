@@ -5,7 +5,12 @@ export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
   ({ className, ...props }, ref) => (
     <div
       ref={ref}
-      className={cn('rounded-lg border border-border bg-surface', className)}
+      className={cn(
+        'rounded-lg border p-4',
+        'bg-[#111827d9] border-[#1f2937]',
+        'backdrop-blur-[8px]',
+        className
+      )}
       {...props}
     />
   )
@@ -14,7 +19,11 @@ Card.displayName = 'Card';
 
 export const CardHeader = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
   ({ className, ...props }, ref) => (
-    <div ref={ref} className={cn('flex flex-col gap-1 px-4 py-3', className)} {...props} />
+    <div
+      ref={ref}
+      className={cn('flex flex-col gap-1 px-4 py-3 border-b border-[#1f2937] mb-3', className)}
+      {...props}
+    />
   )
 );
 CardHeader.displayName = 'CardHeader';
@@ -23,22 +32,29 @@ export const CardTitle = React.forwardRef<HTMLHeadingElement, React.HTMLAttribut
   ({ className, ...props }, ref) => (
     <h3
       ref={ref}
-      className={cn('text-sm font-medium tracking-tight text-foreground', className)}
+      className={cn(
+        'text-sm font-semibold tracking-wide uppercase text-[#06b6d4]',
+        '[text-shadow:0_0_10px_rgba(6,182,212,0.3)]',
+        className
+      )}
       {...props}
     />
   )
 );
 CardTitle.displayName = 'CardTitle';
 
-export const CardDescription = React.forwardRef<HTMLParagraphElement, React.HTMLAttributes<HTMLParagraphElement>>(
-  ({ className, ...props }, ref) => (
-    <p ref={ref} className={cn('text-xs text-muted-foreground', className)} {...props} />
-  )
-);
+export const CardDescription = React.forwardRef<
+  HTMLParagraphElement,
+  React.HTMLAttributes<HTMLParagraphElement>
+>(({ className, ...props }, ref) => (
+  <p ref={ref} className={cn('text-xs text-slate-400', className)} {...props} />
+));
 CardDescription.displayName = 'CardDescription';
 
 export const CardContent = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
-  ({ className, ...props }, ref) => <div ref={ref} className={cn('px-4 py-3', className)} {...props} />
+  ({ className, ...props }, ref) => (
+    <div ref={ref} className={cn('px-4 py-3', className)} {...props} />
+  )
 );
 CardContent.displayName = 'CardContent';
 

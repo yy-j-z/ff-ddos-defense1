@@ -3,35 +3,44 @@
 @tailwind utilities;
 
 /*
- * 浅色简约报告风。中性灰阶 + 单一近黑强调，红/琥珀/绿仅作低饱和功能信号色。
- * 不用渐变、不用玻璃拟态;层级靠排版、留白与细分隔线。
+ * 赛博暗色安全主题 — Cyber Security Dark Theme
+ * 深色背景 + 毛玻璃卡片 + 青色主色调 + glow 发光效果
  */
 @layer base {
   :root {
-    /* 画布与面板 */
-    --canvas: 0 0% 98.5%;        /* 应用底色,微暖白 */
-    --surface: 0 0% 100%;        /* 卡片/面板白 */
-    --surface-muted: 240 5% 96.5%; /* 次级填充(表头、代码块) */
-
-    /* 文字 */
-    --foreground: 240 6% 10%;    /* 近黑正文 */
-    --muted-foreground: 240 4% 46%; /* 次级文字 */
-    --subtle-foreground: 240 4% 64%; /* 占位/弱化 */
-
-    /* 线与强调 */
-    --border: 240 6% 90%;        /* 细分隔线 */
-    --border-strong: 240 5% 84%;
-    --primary: 240 6% 10%;       /* 近黑:主按钮/强调 */
-    --primary-foreground: 0 0% 100%;
-    --ring: 240 5% 65%;
-
-    /* 功能信号色(低饱和,克制使用) */
-    --danger: 0 72% 45%;         /* 命中/危险 */
-    --warning: 32 80% 42%;       /* 警戒 */
-    --success: 152 55% 36%;      /* 正常/放行 */
-    --info: 217 60% 48%;         /* 中性强调 */
-
+    /* 画布与面板 — 深邃暗色 */
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 6.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 224.3 76.3% 48%;
     --radius: 0.5rem;
+
+    /* 自定义赛博色彩 */
+    --cyber-red: #ef4444;
+    --cyber-blue: #3b82f6;
+    --cyber-purple: #a855f7;
+    --cyber-green: #10b981;
+    --cyber-orange: #f59e0b;
+    --cyber-cyan: #06b6d4;
+    --cyber-dark: #0a0e1a;
+    --cyber-darker: #060812;
+    --cyber-surface: #111827;
+    --cyber-border: #1f2937;
   }
 
   * {
@@ -39,31 +48,249 @@
   }
 
   body {
-    background-color: hsl(var(--canvas));
+    background-color: hsl(var(--background));
     color: hsl(var(--foreground));
-    font-feature-settings: 'cv01', 'cv03', 'ss01';
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
+    background-color: var(--cyber-darker);
+    color: #e2e8f0;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  }
+}
+
+@layer components {
+  /* ── 赛博卡片：毛玻璃 + 深色底 ── */
+  .cyber-card {
+    border-radius: var(--radius);
+    border-width: 1px;
+    padding: 1rem;
+    background: rgba(17, 24, 39, 0.85);
+    border-color: var(--cyber-border);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
   }
 
-  /* 表格数字、分数等统一等宽对齐 */
+  .cyber-card-header {
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border-bottom-width: 1px;
+    padding-bottom: 0.5rem;
+    border-color: var(--cyber-border);
+  }
+
+  .cyber-title {
+    font-size: 0.875rem;
+    line-height: 1.25rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    color: var(--cyber-cyan);
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+  }
+
+  /* ── Agent 发光描边 ── */
+  .agent-red-glow {
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.15), inset 0 0 20px rgba(239, 68, 68, 0.05);
+    border-color: rgba(239, 68, 68, 0.3);
+  }
+
+  .agent-blue-glow {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.15), inset 0 0 20px rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.3);
+  }
+
+  .agent-purple-glow {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.15), inset 0 0 20px rgba(168, 85, 247, 0.05);
+    border-color: rgba(168, 85, 247, 0.3);
+  }
+
+  /* ── 状态指示灯 ── */
+  .status-dot {
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 9999px;
+    display: inline-block;
+    flex-shrink: 0;
+  }
+
+  .status-idle {
+    background: #6b7280;
+  }
+
+  .status-running {
+    background: #f59e0b;
+    animation: pulse-glow 1.5s infinite;
+  }
+
+  .status-success {
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.5);
+  }
+
+  .status-error {
+    background: #ef4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.5);
+  }
+
+  .status-warning {
+    background: #f59e0b;
+    animation: pulse-glow 2s infinite;
+  }
+
+  /* ── 发光文字 ── */
+  .glow-text-red {
+    text-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+  }
+
+  .glow-text-blue {
+    text-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+  }
+
+  .glow-text-purple {
+    text-shadow: 0 0 10px rgba(168, 85, 247, 0.5);
+  }
+
+  .glow-text-green {
+    text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+  }
+
+  .glow-text-cyan {
+    text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+  }
+
+  /* ── 指标数值 ── */
+  .metric-value {
+    font-size: 1.5rem;
+    line-height: 2rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* ── 阶段状态 ── */
+  .phase-active {
+    position: relative;
+    background: rgba(6, 182, 212, 0.1);
+    border-color: var(--cyber-cyan);
+  }
+
+  .phase-completed {
+    background: rgba(16, 185, 129, 0.08);
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+
+  /* ── 日志等级颜色 ── */
+  .log-info {
+    color: #94a3b8;
+  }
+
+  .log-warn {
+    color: #fbbf24;
+  }
+
+  .log-error {
+    color: #f87171;
+  }
+
+  .log-success {
+    color: #34d399;
+  }
+
+  /* ── 暗色细滚动条 ── */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 2px;
+  }
+
+  .scroll-quiet {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 transparent;
+  }
+
+  .scroll-quiet::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .scroll-quiet::-webkit-scrollbar-thumb {
+    background-color: #374151;
+    border-radius: 9999px;
+  }
+
+  /* ── 网格背景 (用于页面) ── */
+  .bg-cyber-grid {
+    background-image:
+      linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px);
+    background-size: 50px 50px;
+  }
+}
+
+@layer utilities {
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
 }
 
-@layer utilities {
-  /* 安静的细滚动条,贴合报告气质 */
-  .scroll-quiet {
-    scrollbar-width: thin;
-    scrollbar-color: hsl(var(--border-strong)) transparent;
+/* ── 全局动画 ── */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 1;
   }
-  .scroll-quiet::-webkit-scrollbar {
-    width: 6px;
-    height: 6px;
+  50% {
+    opacity: 0.4;
   }
-  .scroll-quiet::-webkit-scrollbar-thumb {
-    background-color: hsl(var(--border-strong));
-    border-radius: 9999px;
+}
+
+@keyframes scan-line {
+  0% {
+    transform: translateY(-100%);
   }
+  100% {
+    transform: translateY(100vh);
+  }
+}
+
+@keyframes data-flow {
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes float-particle {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-100vh) translateX(20px);
+    opacity: 0;
+  }
+}
+
+.particle {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: rgba(6, 182, 212, 0.3);
+  border-radius: 50%;
+  animation: float-particle linear infinite;
 }

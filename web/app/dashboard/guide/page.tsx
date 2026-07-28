@@ -35,8 +35,8 @@ export default function GuidePage() {
     <ScrollPage className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight">使用教程</h1>
-          <p className="mt-2 text-sm text-muted-foreground">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">使用教程</h1>
+          <p className="mt-2 text-sm text-slate-400">
             按照这个流程完成一次 DDoS 防护验证：检查服务、创建会话、上传流量、启动闭环、查看评分与沉淀剧本。
           </p>
         </div>
@@ -47,8 +47,10 @@ export default function GuidePage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-lg font-medium">服务检查</h2>
-          <p className="mt-1 text-sm text-muted-foreground">开始会话前，先确认关键服务地址可达。</p>
+          <h2 className="text-lg font-medium text-slate-200">服务检查</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            开始会话前，先确认关键服务地址可达。
+          </p>
         </div>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
           {serviceChecks.map((item) => (
@@ -57,8 +59,8 @@ export default function GuidePage() {
                 <CardTitle>{item.name}</CardTitle>
                 <CardDescription>启动前建议先检查</CardDescription>
               </CardHeader>
-              <CardContent className="text-sm text-muted-foreground">
-                <code className="block break-all whitespace-normal rounded bg-surface-muted px-2 py-1 text-xs leading-5 text-foreground">
+              <CardContent className="text-sm text-slate-400">
+                <code className="block break-all whitespace-normal rounded bg-[#1e293b] px-2 py-1 text-xs leading-5 text-slate-300">
                   {item.target}
                 </code>
               </CardContent>
@@ -69,17 +71,21 @@ export default function GuidePage() {
 
       <section className="space-y-4">
         <div>
-          <h2 className="text-lg font-medium">操作流程</h2>
-          <p className="mt-1 text-sm text-muted-foreground">推荐按下面 4 步完成一次完整演示。</p>
+          <h2 className="text-lg font-medium text-slate-200">操作流程</h2>
+          <p className="mt-1 text-sm text-slate-400">
+            推荐按下面 4 步完成一次完整演示。
+          </p>
         </div>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {steps.map((step, index) => (
             <Card key={step.title}>
               <CardHeader>
                 <CardDescription>步骤 {index + 1}</CardDescription>
-                <CardTitle className="text-base">{step.title}</CardTitle>
+                <CardTitle className="text-base text-slate-200">{step.title}</CardTitle>
               </CardHeader>
-              <CardContent className="text-sm leading-6 text-muted-foreground">{step.body}</CardContent>
+              <CardContent className="text-sm leading-6 text-slate-400">
+                {step.body}
+              </CardContent>
             </Card>
           ))}
         </div>

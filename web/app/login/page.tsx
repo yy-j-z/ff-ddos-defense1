@@ -41,10 +41,26 @@ function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm border-[#1f2937] bg-[#111827cc] backdrop-blur-md shadow-[0_0_30px_rgba(6,182,212,0.1)]">
       <CardHeader>
-        <CardTitle>FF · 登录</CardTitle>
-        <p className="text-xs text-muted-foreground">DDoS 防御自动化验证系统</p>
+        <div className="flex items-center gap-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#06b6d4"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ filter: 'drop-shadow(0 0 6px rgba(6,182,212,0.5))' }}
+          >
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          </svg>
+          <CardTitle>FF · 登录</CardTitle>
+        </div>
+        <p className="text-xs text-slate-500">DDoS 防御自动化验证系统</p>
       </CardHeader>
       <form onSubmit={onSubmit} className="flex flex-col gap-4 px-4 pb-4">
         <div className="flex flex-col gap-1.5">
@@ -69,7 +85,7 @@ function LoginForm() {
             required
           />
         </div>
-        {error && <p className="text-xs text-danger">{error}</p>}
+        {error && <p className="text-xs text-red-400">{error}</p>}
         <Button type="submit" disabled={loading}>
           {loading ? '登录中…' : '登录'}
         </Button>
@@ -80,7 +96,41 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-canvas px-4">
+    <main
+      className="flex min-h-screen items-center justify-center px-4 relative overflow-hidden"
+      style={{ background: '#060812' }}
+    >
+      {/* 网格背景 */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage:
+            'linear-gradient(rgba(6, 182, 212, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(6, 182, 212, 0.03) 1px, transparent 1px)',
+          backgroundSize: '50px 50px'
+        }}
+      />
+
+      {/* 浮动粒子 */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 15 }).map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-1 h-1 rounded-full"
+            style={{
+              background:
+                i % 3 === 0
+                  ? 'rgba(239, 68, 68, 0.2)'
+                  : i % 3 === 1
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : 'rgba(6, 182, 212, 0.15)',
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animation: `float-particle ${3 + Math.random() * 4}s linear ${Math.random() * 3}s infinite`
+            }}
+          />
+        ))}
+      </div>
+
       <Suspense fallback={null}>
         <LoginForm />
       </Suspense>

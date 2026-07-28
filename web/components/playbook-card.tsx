@@ -13,9 +13,9 @@ const strategyVariant: Record<AttackPlaybook['strategy'], 'warning' | 'danger' |
 };
 
 function scoreTone(score: number) {
-  if (score >= 70) return 'text-danger';
-  if (score >= 40) return 'text-warning';
-  return 'text-success';
+  if (score >= 70) return 'text-red-400';
+  if (score >= 40) return 'text-amber-400';
+  return 'text-emerald-400';
 }
 
 export function PlaybookCard({
@@ -33,8 +33,10 @@ export function PlaybookCard({
   return (
     <div
       className={cn(
-        'rounded-md border bg-surface transition-colors',
-        active ? 'border-foreground/30 ring-1 ring-foreground/10' : 'border-border'
+        'rounded-md border transition-colors',
+        active
+          ? 'border-[#06b6d440] bg-[#06b6d40a] shadow-[0_0_10px_rgba(6,182,212,0.05)]'
+          : 'border-[#1f2937] bg-[#0f172a]'
       )}
     >
       <button
@@ -44,18 +46,20 @@ export function PlaybookCard({
       >
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-[11px] text-subtle-foreground">R{playbook.round}</span>
+            <span className="font-mono text-[11px] text-slate-500">R{playbook.round}</span>
             <Badge variant={strategyVariant[playbook.strategy]}>{playbook.strategy}</Badge>
           </div>
-          <div className="truncate text-xs text-foreground">{playbook.intent}</div>
+          <div className="truncate text-xs text-slate-300">{playbook.intent}</div>
         </div>
         {score !== undefined && (
-          <span className={cn('font-mono text-sm font-semibold tabular-nums', scoreTone(score))}>{score}</span>
+          <span className={cn('font-mono text-sm font-semibold tabular-nums', scoreTone(score))}>
+            {score}
+          </span>
         )}
       </button>
       {open && (
-        <pre className="scroll-quiet overflow-x-auto border-t border-border bg-surface-muted px-3 py-2 font-mono text-[10px] leading-relaxed text-muted-foreground">
-{yaml}
+        <pre className="scroll-quiet overflow-x-auto border-t border-[#1f2937] bg-[#0a0e1a] px-3 py-2 font-mono text-[10px] leading-relaxed text-slate-400">
+          {yaml}
         </pre>
       )}
     </div>

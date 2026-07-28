@@ -15,32 +15,32 @@ const verdictMeta: Record<
 
 export function JudgePanel({ decision }: { decision: JudgeDecision | null }) {
   if (!decision) {
-    return <p className="text-xs text-subtle-foreground">等待 Judge 决策</p>;
+    return <p className="text-xs text-slate-500">等待 Judge 决策</p>;
   }
   const meta = verdictMeta[decision.verdict];
   return (
     <div className="space-y-3 text-xs">
       <div className="flex items-center justify-between">
-        <span className="text-muted-foreground">判定</span>
+        <span className="text-slate-400">判定</span>
         <Badge variant={meta.variant} dot>
           {meta.label}
         </Badge>
       </div>
 
-      <p className="leading-relaxed text-foreground">{decision.reasoning}</p>
+      <p className="leading-relaxed text-slate-200">{decision.reasoning}</p>
 
       {decision.nextIntent && (
         <div>
-          <span className="text-muted-foreground">下轮意图　</span>
-          <span className="text-foreground">{decision.nextIntent}</span>
+          <span className="text-slate-400">下轮意图　</span>
+          <span className="text-slate-200">{decision.nextIntent}</span>
         </div>
       )}
 
       {decision.defenseWeaknesses.length > 0 && (
-        <Section title="防御弱点" items={decision.defenseWeaknesses} marker="text-danger" />
+        <Section title="防御弱点" items={decision.defenseWeaknesses} marker="text-red-400" />
       )}
       {decision.recommendations.length > 0 && (
-        <Section title="加固建议" items={decision.recommendations} marker="text-success" />
+        <Section title="加固建议" items={decision.recommendations} marker="text-emerald-400" />
       )}
     </div>
   );
@@ -49,10 +49,10 @@ export function JudgePanel({ decision }: { decision: JudgeDecision | null }) {
 function Section({ title, items, marker }: { title: string; items: string[]; marker: string }) {
   return (
     <div>
-      <div className="mb-1 text-muted-foreground">{title}</div>
+      <div className="mb-1 text-slate-400">{title}</div>
       <ul className="space-y-1">
         {items.map((t, i) => (
-          <li key={i} className="flex gap-2 leading-relaxed text-foreground">
+          <li key={i} className="flex gap-2 leading-relaxed text-slate-200">
             <span className={marker}>—</span>
             <span>{t}</span>
           </li>

@@ -167,9 +167,15 @@ export function useSessionStream(
         setState((prev) => {
           const next = { ...prev };
 
-          // 解析 playbooks（从 DB 行的 .data 字段提取）
+          // 解析 playbooks（从 DB 行的 .data 字段提取），用 Set 去重
           if (raw.playbooks && raw.playbooks.length > prev.playbooks.length) {
-            next.playbooks = raw.playbooks.map((p) => p.data);
+            const seen = new Set(prev.playbooks.map((p) => p.id));
+            const newPbs = raw.playbooks
+              .map((p) => p.data)
+              .filter((pb) => !seen.has(pb.id));
+            if (newPbs.length > 0) {
+              next.playbooks = [...prev.playbooks, ...newPbs];
+            }
           }
           // 解析 verifications（从 DB 行的 .metrics 字段提取）
           if (raw.verifications && raw.verifications.length > prev.verifications.length) {

@@ -2,21 +2,18 @@ import * as React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
-/*
- * 方角、低饱和、细描边。状态类用一个前导小圆点表达,而非整块糖果色。
- */
 const badgeVariants = cva(
   'inline-flex items-center gap-1.5 rounded-sm border px-2 py-0.5 text-[11px] font-medium leading-tight',
   {
     variants: {
       variant: {
-        default: 'border-border-strong bg-surface-muted text-foreground',
-        neutral: 'border-border bg-surface-muted text-muted-foreground',
-        success: 'border-success/25 bg-success/8 text-success',
-        warning: 'border-warning/25 bg-warning/8 text-warning',
-        danger: 'border-danger/25 bg-danger/8 text-danger',
-        info: 'border-info/25 bg-info/8 text-info',
-        outline: 'border-border text-muted-foreground'
+        default: 'border-[#1f2937] bg-[#111827] text-slate-300',
+        neutral: 'border-[#1f2937] bg-[#1e293b] text-slate-400',
+        success: 'border-[#10b98140] bg-[#10b9811a] text-[#10b981]',
+        warning: 'border-[#f59e0b40] bg-[#f59e0b1a] text-[#f59e0b]',
+        danger: 'border-[#ef444440] bg-[#ef44441a] text-[#ef4444]',
+        info: 'border-[#06b6d440] bg-[#06b6d41a] text-[#06b6d4]',
+        outline: 'border-[#1f2937] text-slate-400'
       }
     },
     defaultVariants: { variant: 'default' }
@@ -24,19 +21,18 @@ const badgeVariants = cva(
 );
 
 const dotColor: Record<string, string> = {
-  default: 'bg-muted-foreground',
-  neutral: 'bg-subtle-foreground',
-  success: 'bg-success',
-  warning: 'bg-warning',
-  danger: 'bg-danger',
-  info: 'bg-info',
-  outline: 'bg-muted-foreground'
+  default: 'bg-slate-400',
+  neutral: 'bg-slate-500',
+  success: 'bg-[#10b981] shadow-[0_0_6px_rgba(16,185,129,0.5)]',
+  warning: 'bg-[#f59e0b]',
+  danger: 'bg-[#ef4444] shadow-[0_0_6px_rgba(239,68,68,0.5)]',
+  info: 'bg-[#06b6d4] shadow-[0_0_6px_rgba(6,182,212,0.5)]',
+  outline: 'bg-slate-400'
 };
 
 export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {
-  /** 显示前导状态点 */
   dot?: boolean;
 }
 

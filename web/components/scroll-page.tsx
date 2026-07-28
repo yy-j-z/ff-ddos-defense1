@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 
-/** 普通页面的滚动容器:内容区独立滚动,居中限宽。 */
+/** 普通页面的滚动容器：内容区独立滚动，居中限宽。暗色滚动条。 */
 export function ScrollPage({ children, className }: { children: React.ReactNode; className?: string }) {
   return (
     <div className="scroll-quiet h-full overflow-y-auto">

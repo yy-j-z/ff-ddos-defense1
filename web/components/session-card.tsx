@@ -39,11 +39,11 @@ export function SessionCard({ session }: { session: SessionListItem }) {
   return (
     <div className="group relative block">
       <Link href={`/dashboard/sessions/${session.id}`} className="block">
-        <Card className="h-full p-4 transition-colors hover:border-border-strong">
+        <Card className="h-full p-4 transition-all hover:border-[#06b6d440] hover:shadow-[0_0_15px_rgba(6,182,212,0.08)]">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="truncate text-sm font-medium text-foreground">{session.name}</h3>
-              <p className="mt-0.5 font-mono text-[11px] text-subtle-foreground">{session.createdAt}</p>
+              <h3 className="truncate text-sm font-medium text-slate-200">{session.name}</h3>
+              <p className="mt-0.5 font-mono text-[11px] text-slate-500">{session.createdAt}</p>
             </div>
             <Badge variant={meta.variant} dot>
               {meta.label}
@@ -52,18 +52,18 @@ export function SessionCard({ session }: { session: SessionListItem }) {
 
           <div className="mt-4 flex items-end justify-between">
             <div>
-              <div className="text-[10px] uppercase tracking-wide text-subtle-foreground">回合</div>
-              <div className="font-mono text-sm tabular-nums text-foreground">
+              <div className="text-[10px] uppercase tracking-wide text-slate-500">回合</div>
+              <div className="font-mono text-sm tabular-nums text-slate-200">
                 {session.round}
-                <span className="text-subtle-foreground"> / {session.maxRounds}</span>
+                <span className="text-slate-500"> / {session.maxRounds}</span>
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-wide text-subtle-foreground">攻击穿透分</div>
+              <div className="text-[10px] uppercase tracking-wide text-slate-500">攻击穿透分</div>
               <div
                 className={cn(
                   'font-mono text-sm font-semibold tabular-nums',
-                  session.bestScore >= 70 ? 'text-danger' : 'text-foreground'
+                  session.bestScore >= 70 ? 'text-red-400' : 'text-slate-200'
                 )}
               >
                 {session.bestScore}
@@ -71,18 +71,33 @@ export function SessionCard({ session }: { session: SessionListItem }) {
             </div>
           </div>
 
-          <div className="mt-3 h-0.5 w-full overflow-hidden rounded-full bg-surface-muted">
-            <div className="h-full rounded-full bg-foreground/40" style={{ width: `${pct}%` }} />
+          <div className="mt-3 h-0.5 w-full overflow-hidden rounded-full bg-[#1e293b]">
+            <div
+              className="h-full rounded-full bg-[#06b6d4]"
+              style={{ width: `${pct}%` }}
+            />
           </div>
         </Card>
       </Link>
       <button
         onClick={handleDelete}
-        className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-surface/80 text-subtle-foreground opacity-0 transition-opacity hover:bg-danger/10 hover:text-danger group-hover:opacity-100"
+        className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#0f172acc] text-slate-500 opacity-0 transition-opacity hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
         title="删除会话"
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="M3 6h18" />
+          <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+          <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
         </svg>
       </button>
     </div>

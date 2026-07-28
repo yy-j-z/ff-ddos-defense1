@@ -1,37 +1,67 @@
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
-import { SessionCard } from '@/components/session-card';
-import { ScrollPage } from '@/components/scroll-page';
+import { db } from '@/lib/db/client';
+import { sessions, agentTraces, verifications, playbooks } from '@/lib/db/schema';
+import { eq, desc, sql } from 'drizzle-orm';
 import { getSessionSummaries } from '@/lib/db/queries';
+import { DashboardClient } from '@/components/dashboard/DashboardClient';
 
 export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
-  const sessions = await getSessionSummaries();
+  const sessionList = await getSessionSummaries();
+  const sessionCount = sessionList.length;
+  const runningCount = sessionList.filter((s) => s.status === 'running').length;
+
+  // 运行中会话 ID
+  const runningSessions = await db
+    .select({ id: sessions.id })
+    .from(sessions)
+    .where(eq(sessions.status, 'running'))
+    .limit(20);
+  const runningIds = runningSessions.map((s) => s.id);
+
+  // 活跃 Agent
+  const activeAgents: string[] = [];
+  if (runningIds.length > 0) {
+    const traces = await db
+      .selectDistinct({ agentName: agentTraces.agentName })
+      .from(agentTraces)
+      .where(sql`${agentTraces.sessionId} IN ${runningIds}`);
+    activeAgents.push(...traces.map((t) => t.agentName));
+  }
+
+  // 验证数据用于防御评分
+  const allVers = await db.select().from(verifications);
+  const avgScore =
+    allVers.length > 0
+      ? Math.round(allVers.reduce((sum, v) => sum + v.score, 0) / allVers.length)
+      : 0;
+  const avgReachability =
+    allVers.length > 0
+      ? allVers.reduce((sum, v) => sum + v.reachability, 0) / allVers.length
+      : 0;
+  const triggeredCount = allVers.filter((v) => v.defenderTriggered).length;
+
+  // 按策略统计: 每种策略使用了多少次, 平均得分是多少
+  const allPlaybooks = await db.select().from(playbooks);
+  const strategyStats: Record<string, { count: number; totalScore: number }> = {};
+  for (const pb of allPlaybooks) {
+    const data = pb.data as { strategy?: string };
+    const s = data.strategy ?? 'unknown';
+    if (!strategyStats[s]) strategyStats[s] = { count: 0, totalScore: 0 };
+    strategyStats[s].count++;
+    strategyStats[s].totalScore += pb.score ?? 0;
+  }
 
   return (
-    <ScrollPage className="space-y-6">
-      <div className="flex items-end justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">会话</h1>
-          <p className="mt-1 text-sm text-muted-foreground">管理攻防演练会话,或新建一次自动化对抗验证</p>
-        </div>
-        <Link href="/dashboard/sessions/new">
-          <Button>新建会话</Button>
-        </Link>
-      </div>
-
-      {sessions.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-border-strong py-16 text-center text-sm text-muted-foreground">
-          暂无会话,点击右上角「新建会话」开始一次攻防演练
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {sessions.map((s) => (
-            <SessionCard key={s.id} session={s} />
-          ))}
-        </div>
-      )}
-    </ScrollPage>
+    <DashboardClient
+      sessionCount={sessionCount}
+      runningCount={runningCount}
+      recentSessions={sessionList.slice(0, 10)}
+      activeAgents={activeAgents}
+      avgScore={avgScore}
+      avgReachability={avgReachability}
+      defenderTriggeredRatio={allVers.length > 0 ? triggeredCount / allVers.length : 0}
+      strategyStats={strategyStats}
+    />
   );
 }
