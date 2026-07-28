@@ -1,15 +1,13 @@
 'use client';
 
 import { Suspense, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input, Label } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 
 function LoginForm() {
   const router = useRouter();
-  const params = useSearchParams();
-  const from = params.get('from') || '/dashboard';
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -27,7 +25,7 @@ function LoginForm() {
         body: JSON.stringify({ username, password })
       });
       if (res.ok) {
-        router.replace(from);
+        router.replace('/dashboard');
         router.refresh();
       } else {
         const data = await res.json().catch(() => ({}));
