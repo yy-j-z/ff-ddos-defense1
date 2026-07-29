@@ -6,6 +6,8 @@ import { DashboardTrafficPanel } from './TrafficPanel';
 import { DashboardAttackMatrix } from './AttackMatrixPanel';
 import { DashboardNetworkViz } from './NetworkViz';
 import { DashboardDefensePanel } from './DefensePanel';
+import Link from 'next/link';
+import { Clock } from 'lucide-react';
 
 interface DashboardClientProps {
   sessionCount: number;
@@ -109,6 +111,19 @@ export function DashboardClient({
 
             {/* 右栏 3/12 */}
             <div className="col-span-1 lg:col-span-3 flex flex-col gap-4">
+              {/* 历史记录入口 */}
+              <Link
+                href="/dashboard/sessions"
+                className="cyber-card flex items-center gap-3 p-3 rounded-lg border border-amber-500/30 bg-gradient-to-r from-amber-500/10 to-amber-500/5 hover:scale-[1.02] transition-transform shadow-[0_0_12px_rgba(251,191,36,0.1)]"
+              >
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-900/50 text-amber-400">
+                  <Clock className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-amber-400">会话历史记录</h4>
+                  <p className="text-xs text-slate-400">查看所有历史测试数据</p>
+                </div>
+              </Link>
               <DashboardAttackMatrix strategyStats={strategyStats} />
               <div className="flex-1">
                 <DashboardDefensePanel
