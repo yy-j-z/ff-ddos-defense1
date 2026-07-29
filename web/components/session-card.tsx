@@ -26,7 +26,7 @@ export function SessionCard({ session }: { session: SessionListItem }) {
   const handleDelete = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!confirm(`确定删除会话「${session.name}」？此操作不可撤销。`)) return;
+    if (!confirm(`确定删除自检任务「${session.name}」？此操作不可撤销。`)) return;
     try {
       const res = await fetch(`/api/sessions/${session.id}`, { method: 'DELETE' });
       if (res.ok) router.refresh();
@@ -82,7 +82,7 @@ export function SessionCard({ session }: { session: SessionListItem }) {
       <button
         onClick={handleDelete}
         className="absolute right-2 top-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-[#0f172acc] text-slate-500 opacity-0 transition-opacity hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
-        title="删除会话"
+        title="删除自检任务"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

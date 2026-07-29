@@ -16,6 +16,7 @@ interface DashboardClientProps {
   avgReachability: number;
   defenderTriggeredRatio: number;
   strategyStats: Record<string, { count: number; totalScore: number }>;
+  trendHistory: Array<{ score: number; reachability: number; defenderTriggered: boolean; createdAt: Date }>;
 }
 
 export function DashboardClient({
@@ -26,7 +27,8 @@ export function DashboardClient({
   avgScore,
   avgReachability,
   defenderTriggeredRatio,
-  strategyStats
+  strategyStats,
+  trendHistory
 }: DashboardClientProps) {
   const activeSessions = recentSessions.filter(
     (s) => s.status === 'running' || s.status === 'pending'
@@ -59,7 +61,7 @@ export function DashboardClient({
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
-                  <h2 className="cyber-title">运行中会话</h2>
+                  <h2 className="cyber-title">运行中测试任务</h2>
                   <span className="text-xs text-slate-500 ml-auto">{activeSessions.length} 个活跃</span>
                 </div>
 
@@ -115,6 +117,7 @@ export function DashboardClient({
                   avgScore={avgScore}
                   avgReachability={avgReachability}
                   defenderTriggeredRatio={defenderTriggeredRatio}
+                  trendHistory={trendHistory}
                 />
               </div>
             </div>
@@ -127,7 +130,7 @@ export function DashboardClient({
         style={{ background: 'rgba(6, 8, 18, 0.8)', borderColor: 'rgba(30, 41, 59, 0.5)' }}
       >
         <div className="mx-auto max-w-[1920px] flex items-center justify-between text-xs text-slate-600">
-          <span>DDoS防御能力自检系统 v2.0 | AI Agent驱动的红蓝对抗多智能体闭环</span>
+          <span>DDoS 攻防自检系统 v2.0 | AI Agent 驱动的多智能体对抗验证闭环</span>
           <span>赛道: B-EP1 智能体互联网创新攻关</span>
         </div>
       </footer>

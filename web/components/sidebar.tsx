@@ -7,22 +7,22 @@ import { cn } from '@/lib/utils';
 const items = [
   {
     href: '/dashboard',
-    label: '仪表盘',
+    label: '攻防总览',
     match: (p: string) => p === '/dashboard'
   },
   {
     href: '/dashboard/sessions',
-    label: '会话',
+    label: '自检任务',
     match: (p: string) => p.startsWith('/dashboard/sessions')
   },
   {
     href: '/dashboard/playbooks',
-    label: '剧本库',
+    label: '策略库',
     match: (p: string) => p.startsWith('/dashboard/playbooks')
   },
   {
     href: '/dashboard/guide',
-    label: '使用教程',
+    label: '操作手册',
     match: (p: string) => p.startsWith('/dashboard/guide')
   }
 ];

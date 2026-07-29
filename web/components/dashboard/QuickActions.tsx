@@ -8,8 +8,8 @@ const actions = [
   {
     href: '/dashboard/sessions/new',
     icon: <Play className="w-4 h-4" />,
-    label: '新建会话',
-    desc: '创建攻防演练',
+    label: '新建 DDoS 攻防测试任务',
+    desc: '创建攻防测试任务',
     color: 'cyan',
     gradient: 'from-cyan-500/20 to-cyan-500/5',
     border: 'border-cyan-500/30',
@@ -19,8 +19,8 @@ const actions = [
   {
     href: '/dashboard/playbooks',
     icon: <BookOpen className="w-4 h-4" />,
-    label: '剧本库',
-    desc: '成功剧本沉淀',
+    label: '策略库',
+    desc: '成功策略沉淀',
     color: 'purple',
     gradient: 'from-purple-500/20 to-purple-500/5',
     border: 'border-purple-500/30',
@@ -30,7 +30,7 @@ const actions = [
   {
     href: '/dashboard/guide',
     icon: <FileText className="w-4 h-4" />,
-    label: '使用教程',
+    label: '操作手册',
     desc: '操作指南',
     color: 'emerald',
     gradient: 'from-emerald-500/20 to-emerald-500/5',

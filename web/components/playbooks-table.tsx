@@ -24,7 +24,7 @@ export function PlaybooksTable({ rows }: { rows: PlaybookLibraryItem[] }) {
   if (rows.length === 0) {
     return (
       <div className="rounded-lg border border-dashed border-[#1f2937] py-16 text-center text-sm text-slate-500">
-        剧本库为空，完成一次攻防会话后成功剧本会沉淀到这里
+        策略库为空，完成一次攻防测试后成功策略会沉淀到这里
       </div>
     );
   }

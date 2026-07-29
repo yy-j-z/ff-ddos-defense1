@@ -13,8 +13,8 @@ const serviceChecks = [
 
 const steps = [
   {
-    title: '新建 Session',
-    body: '进入会话页，点击右上角新建会话，填写名称、允许的攻击策略、最大回合数和持续时间。'
+    title: '新建测试任务',
+    body: '进入自检任务页，点击右上角新建，填写名称、允许的攻击策略、最大回合数和持续时间。'
   },
   {
     title: '上传 PCAP',
@@ -26,7 +26,7 @@ const steps = [
   },
   {
     title: '查看评分',
-    body: '重点看 Reachability、Defender 是否触发、业务影响等级和最终得分。高价值剧本会沉淀到剧本库。'
+    body: '重点看 Reachability、Defender 是否触发、业务影响等级和最终得分。高价值策略会沉淀到策略库。'
   }
 ];
 
@@ -35,13 +35,13 @@ export default function GuidePage() {
     <ScrollPage className="space-y-8">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">使用教程</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-100">操作手册</h1>
           <p className="mt-2 text-sm text-slate-400">
-            按照这个流程完成一次 DDoS 防护验证：检查服务、创建会话、上传流量、启动闭环、查看评分与沉淀剧本。
+            按照这个流程完成一次 DDoS 防护验证：检查服务、创建任务、上传流量、启动闭环、查看评分与沉淀策略。
           </p>
         </div>
         <Link href="/dashboard/sessions/new">
-          <Button className="shrink-0">新建会话</Button>
+          <Button className="shrink-0">新建 DDoS 攻防测试任务</Button>
         </Link>
       </div>
 

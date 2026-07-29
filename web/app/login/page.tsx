@@ -56,9 +56,9 @@ function LoginForm() {
           >
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
           </svg>
-          <CardTitle>FF · 登录</CardTitle>
+          <CardTitle>FF · DDoS 防御验证平台</CardTitle>
         </div>
-        <p className="text-xs text-slate-500">DDoS 防御自动化验证系统</p>
+        <p className="text-xs text-slate-500">多智能体攻防对抗验证系统</p>
       </CardHeader>
       <form onSubmit={onSubmit} className="flex flex-col gap-4 px-4 pb-4">
         <div className="flex flex-col gap-1.5">
@@ -85,7 +85,7 @@ function LoginForm() {
         </div>
         {error && <p className="text-xs text-red-400">{error}</p>}
         <Button type="submit" disabled={loading}>
-          {loading ? '登录中…' : '登录'}
+          {loading ? '验证中…' : '进入 DDoS 防御验证平台'}
         </Button>
       </form>
     </Card>

@@ -76,10 +76,10 @@ export default function NewSessionPage() {
           <div className="flex items-center gap-3">
             <Shield className="w-6 h-6 text-cyan-400" />
             <div>
-              <h1 className="text-lg font-bold text-white">新建攻防会话</h1>
+              <h1 className="text-lg font-bold text-white">新建 DDoS 攻防测试任务</h1>
               <p className="text-xs text-slate-400 flex items-center gap-1">
                 <Zap className="w-3 h-3 text-yellow-400" />
-                配置攻击范围，启动自动化对抗验证
+                配置攻击范围，启动自动化攻防验证
               </p>
             </div>
           </div>

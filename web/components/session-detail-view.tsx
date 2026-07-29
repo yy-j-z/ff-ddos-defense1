@@ -63,7 +63,7 @@ export function SessionDetailView({
         <div className="mx-auto max-w-5xl space-y-3 relative z-10">
           <nav className="flex items-center gap-1.5 text-xs text-slate-500">
             <Link href="/dashboard" className="hover:text-[#06b6d4] transition-colors">
-              会话
+              自检任务
             </Link>
             <span className="text-slate-600">/</span>
             <span className="text-slate-300">{name}</span>
@@ -102,7 +102,7 @@ export function SessionDetailView({
                   <polyline points="7 10 12 15 17 10" />
                   <line x1="12" y1="15" x2="12" y2="3" />
                 </svg>
-                导出报告
+                导出攻防测试报告
               </a>
               <Stat label="当前回合" value={`${stream.playbooks.length}`} suffix={`/ ${maxRounds}`} />
               <Stat

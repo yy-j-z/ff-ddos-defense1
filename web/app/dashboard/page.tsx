@@ -1,6 +1,6 @@
 import { db } from '@/lib/db/client';
 import { sessions, agentTraces, verifications, playbooks } from '@/lib/db/schema';
-import { eq, desc, sql } from 'drizzle-orm';
+import { eq, desc, sql, asc } from 'drizzle-orm';
 import { getSessionSummaries } from '@/lib/db/queries';
 import { DashboardClient } from '@/components/dashboard/DashboardClient';
 
@@ -52,6 +52,20 @@ export default async function DashboardPage() {
     strategyStats[s].totalScore += pb.score ?? 0;
   }
 
+  // 趋势数据 — 按时间排序的最近验证记录，用于浮动图表
+  const trendHistory = allVers.length > 0
+    ? await db
+        .select({
+          score: verifications.score,
+          reachability: verifications.reachability,
+          defenderTriggered: verifications.defenderTriggered,
+          createdAt: verifications.createdAt
+        })
+        .from(verifications)
+        .orderBy(asc(verifications.createdAt))
+        .limit(30)
+    : [];
+
   return (
     <DashboardClient
       sessionCount={sessionCount}
@@ -62,6 +76,7 @@ export default async function DashboardPage() {
       avgReachability={avgReachability}
       defenderTriggeredRatio={allVers.length > 0 ? triggeredCount / allVers.length : 0}
       strategyStats={strategyStats}
+      trendHistory={trendHistory}
     />
   );
 }
