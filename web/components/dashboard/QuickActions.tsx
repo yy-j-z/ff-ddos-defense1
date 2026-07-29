@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Play, BookOpen, Shield, FileText, Terminal, Wrench, Zap } from 'lucide-react';
+import { Play, BookOpen, Shield, FileText, Terminal, Wrench, Zap, Clock } from 'lucide-react';
 
 const actions = [
   {
@@ -15,6 +15,17 @@ const actions = [
     border: 'border-cyan-500/30',
     text: 'text-cyan-400',
     glow: 'shadow-[0_0_15px_rgba(6,182,212,0.15)]'
+  },
+  {
+    href: '/dashboard/sessions',
+    icon: <Clock className="w-4 h-4" />,
+    label: '会话历史记录',
+    desc: '查看所有历史测试数据',
+    color: 'amber',
+    gradient: 'from-amber-500/20 to-amber-500/5',
+    border: 'border-amber-500/30',
+    text: 'text-amber-400',
+    glow: 'shadow-[0_0_15px_rgba(251,191,36,0.15)]'
   },
   {
     href: '/dashboard/playbooks',
