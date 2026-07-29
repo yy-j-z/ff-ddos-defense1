@@ -95,6 +95,25 @@ export function Sidebar() {
             </Link>
           );
         })}
+
+        {/* 分隔 */}
+        <div className="my-2 border-t border-[#1f2937]" />
+
+        {/* 查看历史记录 */}
+        <Link
+          href="/dashboard/sessions"
+          className={cn(
+            'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-all',
+            pathname === '/dashboard/sessions'
+              ? 'bg-[#06b6d41a] font-medium text-[#06b6d4] border border-[#06b6d440]'
+              : 'text-slate-500 hover:bg-[#111827] hover:text-slate-300'
+          )}
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+          </svg>
+          历史记录
+        </Link>
       </nav>
 
       {/* 退出 */}
