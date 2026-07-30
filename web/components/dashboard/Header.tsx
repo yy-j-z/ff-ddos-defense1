@@ -1,6 +1,7 @@
 'use client';
 
 import { Shield, Activity, Terminal, Zap } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface HeaderProps {
   sessionCount: number;
