@@ -8,8 +8,8 @@ const actions = [
   {
     href: '/dashboard/sessions/new',
     icon: <Play className="w-4 h-4" />,
-    label: '新建 DDoS 攻防测试任务',
-    desc: '创建攻防测试任务',
+    label: '新建测试任务',
+    desc: '创建攻防自动化验证任务',
     color: 'cyan',
     gradient: 'from-cyan-500/20 to-cyan-500/5',
     border: 'border-cyan-500/30',
@@ -19,8 +19,8 @@ const actions = [
   {
     href: '/dashboard/sessions',
     icon: <Clock className="w-4 h-4" />,
-    label: '会话历史记录',
-    desc: '查看所有历史测试数据',
+    label: '测试任务记录',
+    desc: '查看所有历史验证数据与报表',
     color: 'amber',
     gradient: 'from-amber-500/20 to-amber-500/5',
     border: 'border-amber-500/30',

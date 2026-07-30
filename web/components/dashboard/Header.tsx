@@ -1,7 +1,6 @@
 'use client';
 
 import { Shield, Activity, Terminal, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 interface HeaderProps {
   sessionCount: number;
@@ -20,14 +19,6 @@ export function DashboardHeader({ sessionCount, runningCount }: HeaderProps) {
         borderBottom: '1px solid #1f2937'
       }}
     >
-      {/* 扫描线 */}
-      <motion.div
-        className="absolute left-0 right-0 h-px z-10"
-        style={{ background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)' }}
-        animate={{ top: ['0%', '100%'] }}
-        transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
-      />
-
       <div className="mx-auto px-4 py-3" style={{ maxWidth: '1920px' }}>
         <div className="flex items-center justify-between flex-wrap gap-2">
           {/* 左侧 Logo */}

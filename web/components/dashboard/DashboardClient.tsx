@@ -7,7 +7,9 @@ import { DashboardAttackMatrix } from './AttackMatrixPanel';
 import { DashboardNetworkViz } from './NetworkViz';
 import { DashboardDefensePanel } from './DefensePanel';
 import Link from 'next/link';
-import { Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clock, LogOut } from 'lucide-react';
+import { useState } from 'react';
 
 interface DashboardClientProps {
   sessionCount: number;
@@ -32,12 +34,23 @@ export function DashboardClient({
   strategyStats,
   trendHistory
 }: DashboardClientProps) {
+  const router = useRouter();
+  const [loggingOut, setLoggingOut] = useState(false);
   const activeSessions = recentSessions.filter(
     (s) => s.status === 'running' || s.status === 'pending'
   );
 
   return (
     <div className="flex flex-col h-full" style={{ background: '#060812' }}>
+      {/* 全屏扫描光线 */}
+      <div
+        className="fixed left-0 right-0 top-0 h-px z-50 pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
+          boxShadow: '0 0 8px rgba(6,182,212,0.3)',
+          animation: 'scan-line 3s linear infinite'
+        }}
+      />
       <DashboardHeader sessionCount={sessionCount} runningCount={runningCount} />
 
       <div className="flex-1 overflow-y-auto scrollbar-thin p-4">
@@ -58,10 +71,34 @@ export function DashboardClient({
                   <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-amber-400">会话历史记录</h4>
-                  <p className="text-xs text-slate-400">查看所有历史测试数据</p>
+                  <h4 className="text-sm font-semibold text-amber-400">测试任务记录</h4>
+                  <p className="text-xs text-slate-400">查看完整测试数据与报表</p>
                 </div>
               </Link>
+              {/* 退出登录 */}
+              <button
+                onClick={async () => {
+                  setLoggingOut(true);
+                  try {
+                    await fetch('/api/logout', { method: 'POST' });
+                    router.push('/login');
+                  } catch {
+                    router.push('/login');
+                  }
+                }}
+                disabled={loggingOut}
+                className="cyber-card flex items-center gap-3 p-3 rounded-lg border border-slate-700/30 bg-gradient-to-r from-slate-700/10 to-slate-700/5 hover:scale-[1.02] transition-transform hover:border-red-500/30 hover:from-red-500/10 group"
+              >
+                <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-slate-900/50 text-slate-500 group-hover:text-red-400 transition-colors">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-semibold text-slate-400 group-hover:text-red-400 transition-colors">
+                    {loggingOut ? '退出中…' : '退出登录'}
+                  </h4>
+                  <p className="text-xs text-slate-600">返回登录页面</p>
+                </div>
+              </button>
             </div>
 
             {/* 中栏 6/12 */}

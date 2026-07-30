@@ -45,7 +45,7 @@ export function SessionDetailView({
     <div className="flex h-full flex-col" style={{ background: '#060812' }}>
       {/* 全屏扫描光线 */}
       <div
-        className="fixed left-0 right-0 h-px z-50 pointer-events-none"
+        className="fixed left-0 right-0 top-0 h-px z-50 pointer-events-none"
         style={{
           background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
           boxShadow: '0 0 8px rgba(6,182,212,0.3)',
