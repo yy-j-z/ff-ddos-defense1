@@ -2,6 +2,8 @@
  * Attacker Agent
  * 输入: BusinessProfile + intent + 历史 playbook/verification(防止重复无效策略)
  * 输出: AttackPlaybook —— 参数化攻击剧本
+ *
+ * RAG 增强: ragReferences 提供历史上相似业务场景的成功策略作为参考。
  */
 import { generateObject } from '../llm/client';
 import {
@@ -10,6 +12,7 @@ import {
   type BusinessProfile,
   type VerificationResult
 } from '../types';
+import type { RagResult } from '../rag/search';
 import { isMockMode, mockPlaybook } from './mock';
 
 const SYSTEM = `你是红队专家,负责全面评估防御系统的能力。你的任务不是"不惜一切代价绕过防御",
@@ -40,12 +43,30 @@ export async function runAttacker(input: {
   allowedStrategies?: string[];
   previousPlaybooks?: AttackPlaybook[];
   previousResults?: VerificationResult[];
+  ragReferences?: RagResult[];  // RAG: 历史上相似场景的成功策略
 }): Promise<{ playbook: AttackPlaybook; thinking?: string }> {
   if (isMockMode()) {
     return {
       playbook: mockPlaybook(input.round, input.profile),
       thinking: 'mock mode: 使用预设剧本演进序列'
     };
+  }
+
+  // ─── RAG: 构造参考历史策略段落 ───
+  let ragSection = '';
+  const refs = input.ragReferences ?? [];
+  if (refs.length > 0) {
+    ragSection =
+      '\n\n## 参考历史成功策略（RAG）\n' +
+      '以下是与当前业务场景相似的、历史上成功的攻击策略，可作为参考：\n' +
+      refs
+        .map(
+          (r, i) =>
+            `[参考${i + 1}] 策略=${r.playbook.strategy} | 意图="${r.playbook.intent}" | ` +
+            `假设="${r.playbook.hypothesis}" | 历史得分=${r.score} | 相似度=${(r.similarity * 100).toFixed(0)}%`
+        )
+        .join('\n') +
+      '\n注意：参考策略来自其他业务场景，不可直接照搬参数。请根据当前业务画像调整 endpoints、UA、QPS 等参数。';
   }
 
   const historySection =
@@ -72,7 +93,7 @@ ${input.intent}
 ${allowed}
 
 ## 当前回合号
-${input.round}${historySection}
+${input.round}${historySection}${ragSection}
 
 请输出符合 AttackPlaybookSchema 的剧本。id 用 "pb-r${input.round}-<short-uuid>" 形式。`;
 

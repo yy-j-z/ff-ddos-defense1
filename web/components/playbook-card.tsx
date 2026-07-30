@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import type { AttackPlaybook } from '@/lib/types';
 
-const strategyVariant: Record<AttackPlaybook['strategy'], 'warning' | 'danger' | 'info'> = {
+const strategyVariant: Record<AttackPlaybook['strategy'], 'warning' | 'danger' | 'info' | 'neutral'> = {
   slowloris: 'warning',
   http_flood: 'danger',
-  syn_flood: 'info'
+  syn_flood: 'info',
+  hulk_flood: 'neutral',
+  slow_headers: 'warning'
 };
 
 function scoreTone(score: number) {

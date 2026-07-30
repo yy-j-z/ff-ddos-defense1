@@ -37,8 +37,10 @@ import { enqueueAttack, waitForAttack } from '../queue/attack-queue';
 import { clampPlaybookToScope, checkPlaybookScope } from './scope';
 import { db } from '../db/client';
 import { sessions, profiles, playbooks as playbooksTable, verifications, agentTraces } from '../db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import { sessionBus } from './bus';
+import { embedText, playbookToEmbeddingText, profileToEmbeddingText } from '../rag/embeddings';
+import { searchSimilarPlaybooks, type RagResult } from '../rag/search';
 
 interface RunSessionOpts {
   sessionId: string;
@@ -231,6 +233,21 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
     .values({ sessionId, data: profile as unknown as object })
     .catch((err) => console.warn('[profile] 落库失败', err));
 
+  // ─── RAG: 基于业务画像搜索相似历史策略 ───
+  let ragPlaybooks: RagResult[] = [];
+  try {
+    const queryText = profileToEmbeddingText(profile);
+    const queryVec = await embedText(queryText);
+    if (queryVec) {
+      ragPlaybooks = await searchSimilarPlaybooks(queryVec, 3, 50);
+      if (ragPlaybooks.length > 0) {
+        console.log(`[rag] 找到 ${ragPlaybooks.length} 个相似历史策略`);
+      }
+    }
+  } catch (err) {
+    console.warn('[rag] 搜索失败，跳过:', (err as Error).message?.slice(0, 100));
+  }
+
   // === 3) 多回合循环 ===
   const history: Array<{ playbook: AttackPlaybook; result: VerificationResult }> = [];
   const maxRounds = scope.maxRounds;
@@ -252,7 +269,8 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
           round,
           allowedStrategies: scope.allowedStrategies,
           previousPlaybooks: history.map((h) => h.playbook),
-          previousResults: history.map((h) => h.result)
+          previousResults: history.map((h) => h.result),
+          ragReferences: ragPlaybooks
         }),
       (r) => r.playbook
     );
@@ -432,6 +450,22 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
         .set({ score: verification.score })
         .where(eq(playbooksTable.id, playbookRowId))
         .catch(() => {});
+
+    // ─── RAG: 成功策略生成向量存库 ───
+    // 得分 >= 50 且在 RAG 搜索中未出现过（避免重复存储）
+    if (playbookRowId && verification.score >= 50) {
+      const alreadyInRag = ragPlaybooks.some((r) => r.playbook.id === playbook.id);
+      if (!alreadyInRag) {
+        embedText(playbookToEmbeddingText(playbook)).then((vec) => {
+          if (vec) {
+            db.execute(sql`
+              UPDATE playbooks SET embedding = ${JSON.stringify(vec)}::vector
+              WHERE id = ${playbookRowId}
+            `).catch((err) => console.warn('[rag] 向量落库失败', err));
+          }
+        });
+      }
+    }
     }
 
     history.push({ playbook, result: verification });
