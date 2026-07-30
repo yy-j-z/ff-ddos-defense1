@@ -252,7 +252,7 @@
 
 @keyframes scan-line {
   0% {
-    transform: translateY(-100%);
+    transform: translateY(-100vh);
   }
   100% {
     transform: translateY(100vh);

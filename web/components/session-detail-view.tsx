@@ -43,9 +43,19 @@ export function SessionDetailView({
 
   return (
     <div className="flex h-full flex-col" style={{ background: '#060812' }}>
+      {/* 全屏扫描光线 */}
+      <div
+        className="fixed left-0 right-0 h-px z-50 pointer-events-none"
+        style={{
+          background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
+          boxShadow: '0 0 8px rgba(6,182,212,0.3)',
+          animation: 'scan-line 3s linear infinite'
+        }}
+      />
+
       {/* 固定页头：暗色背景 + 底部扫描线 */}
       <header
-        className="shrink-0 border-b px-8 pb-5 pt-6 relative overflow-hidden"
+        className="shrink-0 border-b px-8 pb-5 pt-6 relative"
         style={{
           background: 'linear-gradient(135deg, #0a0e1a 0%, #111827 50%, #0a0e1a 100%)',
           borderColor: '#1f2937'
