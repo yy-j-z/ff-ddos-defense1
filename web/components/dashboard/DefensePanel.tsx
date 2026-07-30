@@ -122,7 +122,7 @@ export function DashboardDefensePanel({
       bg: 'bg-purple-500/10',
       border: 'border-purple-500/20',
       icon: <Activity className="w-3 h-3" />,
-      desc: '累计攻防测试任务数'
+      desc: '累计自检任务数'
     }
   ];
 

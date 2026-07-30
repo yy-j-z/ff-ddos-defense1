@@ -13,7 +13,7 @@ const serviceChecks = [
 
 const steps = [
   {
-    title: '新建测试任务',
+    title: '新建自检任务',
     body: '进入自检任务页，点击右上角新建，填写名称、允许的攻击策略、最大回合数和持续时间。'
   },
   {
@@ -41,7 +41,7 @@ export default function GuidePage() {
           </p>
         </div>
         <Link href="/dashboard/sessions/new">
-          <Button className="shrink-0">新建 DDoS 攻防测试任务</Button>
+          <Button className="shrink-0">新建自检任务</Button>
         </Link>
       </div>
 

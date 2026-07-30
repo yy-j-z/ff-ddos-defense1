@@ -8,7 +8,7 @@ const actions = [
   {
     href: '/dashboard/sessions/new',
     icon: <Play className="w-4 h-4" />,
-    label: '新建测试任务',
+    label: '新建自检任务',
     desc: '创建攻防自动化验证任务',
     color: 'cyan',
     gradient: 'from-cyan-500/20 to-cyan-500/5',
@@ -19,7 +19,7 @@ const actions = [
   {
     href: '/dashboard/sessions',
     icon: <Clock className="w-4 h-4" />,
-    label: '测试任务记录',
+    label: '自检任务记录',
     desc: '查看所有历史验证数据与报表',
     color: 'amber',
     gradient: 'from-amber-500/20 to-amber-500/5',

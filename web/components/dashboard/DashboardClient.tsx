@@ -71,7 +71,7 @@ export function DashboardClient({
                   <Clock className="w-4 h-4" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-amber-400">测试任务记录</h4>
+                  <h4 className="text-sm font-semibold text-amber-400">自检任务记录</h4>
                   <p className="text-xs text-slate-400">查看完整测试数据与报表</p>
                 </div>
               </Link>
@@ -113,19 +113,19 @@ export function DashboardClient({
                   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#06b6d4" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                   </svg>
-                  <h2 className="cyber-title">运行中测试任务</h2>
+                  <h2 className="cyber-title">运行中自检任务</h2>
                   <span className="text-xs text-slate-500 ml-auto">{activeSessions.length} 个活跃</span>
                 </div>
 
                 {activeSessions.length === 0 ? (
                   <div className="py-8 text-center text-xs text-slate-600">
-                    暂无运行中的会话
+                    暂无运行中的自检任务
                     <br />
                     <a
                       href="/dashboard/sessions/new"
                       className="mt-2 inline-block text-[#06b6d4] hover:underline"
                     >
-                      点击创建新会话 →
+                      点击创建新自检任务 →
                     </a>
                   </div>
                 ) : (

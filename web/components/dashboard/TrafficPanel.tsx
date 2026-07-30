@@ -41,7 +41,7 @@ export function DashboardTrafficPanel() {
       >
         <div className="flex flex-col items-center gap-1 w-full">
           <Upload className="w-5 h-5 text-slate-500" aria-hidden="true" />
-          <span className="text-xs text-slate-500">拖拽或点击创建新会话</span>
+          <span className="text-xs text-slate-500">拖拽或点击创建自检任务</span>
           <span className="text-[10px] text-slate-600">支持 .pcap / .pcapng 流量样本</span>
         </div>
       </div>

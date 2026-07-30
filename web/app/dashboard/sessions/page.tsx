@@ -15,11 +15,11 @@ export default async function SessionsListPage() {
         <div>
           <h1 className="text-xl font-semibold tracking-tight text-slate-100">自检任务</h1>
           <p className="mt-1 text-sm text-slate-400">
-            管理攻防测试任务，或开始一次新的自动化对抗验证
-          </p>
-        </div>
-        <Link href="/dashboard/sessions/new">
-          <Button>新建 DDoS 攻防测试任务</Button>
+            管理自检任务，或开始一次新的自动化对抗验证
+                         </p>
+                       </div>
+                       <Link href="/dashboard/sessions/new">
+                         <Button>新建自检任务</Button>
         </Link>
       </div>
 
