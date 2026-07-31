@@ -8,11 +8,15 @@
 export const AUTH_COOKIE = 'ff_auth';
 
 function getCreds() {
-  return {
-    username: process.env.APP_AUTH_USERNAME || 'admin',
-    password: process.env.APP_AUTH_PASSWORD || '1234',
-    secret: process.env.APP_AUTH_SECRET || 'ff-ddos-defense-dev-secret-change-me'
-  };
+  // 兼容两套环境变量名:
+  //  - APP_AUTH_*  本地开发 .env.local(.env.local.example 用这套)
+  //  - AUTH_*      docker-compose 生产部署(compose 只透传这套)
+  // 之前 compose 传 AUTH_PASSWORD,代码却只读 APP_AUTH_PASSWORD → 线上永远用默认口令。
+  const username = process.env.APP_AUTH_USERNAME || process.env.AUTH_USERNAME || 'admin';
+  const password = process.env.APP_AUTH_PASSWORD || process.env.AUTH_PASSWORD || '1234';
+  const secret =
+    process.env.APP_AUTH_SECRET || process.env.AUTH_SECRET || 'ff-ddos-defense-dev-secret-change-me';
+  return { username, password, secret };
 }
 
 async function sha256Hex(input: string): Promise<string> {

@@ -107,9 +107,30 @@ export const VerificationResultSchema = z.object({
   totalRequests: z.number().int().nonnegative(),
   blockedRequests: z.number().int().nonnegative(),
   businessImpact: z.enum(['none', 'low', 'medium', 'high']),
-  score: z.number().min(0).max(100).describe('绕过得分,越高表示攻击越成功')
+  score: z.number().min(0).max(100).describe('绕过得分,越高表示攻击越成功'),
+  /** 防御日志证据状态: ok=日志正常, missing=文件存在但无本轮记录, error=日志读取失败 */
+  logStatus: z.enum(['ok', 'missing', 'error']).default('ok').describe('防御日志证据状态'),
+  /** 证据是否完整:日志读取失败/LLM降级时=false,报告需醒目标注 */
+  evidenceComplete: z.boolean().default(true).describe('本回合证据是否完整')
 });
 export type VerificationResult = z.infer<typeof VerificationResultSchema>;
+
+/**
+ * 会话级执行元信息 —— 用于报告/UI 醒目标注"本轮是否走了降级路径"。
+ * 消除"看起来通过但实际是 mock/fallback"的可信性问题(L4)。
+ */
+export interface SessionMeta {
+  /** 真实 LLM 闭环,还是 mock 降级,mixed=部分 agent 降级 */
+  llmMode: 'real' | 'mock' | 'mixed';
+  /** PCAP 解析是否成功 */
+  pcapStatus: 'ok' | 'failed';
+  /** 本轮降级/回退次数(LLM 失败、队列失败、PCAP 失败等) */
+  fallbackCount: number;
+  /** 攻击执行是否走 mock(队列/Redis 不可用) */
+  attackMode: 'real' | 'mock';
+  /** 是否有回合证据不完整 */
+  evidenceIncomplete: boolean;
+}
 
 // ─────────────────────────────────────────────────────────────
 // 5. JudgeDecision  (Judge Agent 输出)
@@ -170,6 +191,7 @@ export type SSEEvent =
   | { type: 'attack.metric'; round: number; ts: number; rps: number; blocked: number }
   | { type: 'verification.done'; result: VerificationResult }
   | { type: 'judge.decision'; decision: JudgeDecision }
+  | { type: 'session.meta'; meta: SessionMeta }
   | { type: 'session.completed'; sessionId: string }
   | { type: 'session.stopped'; sessionId: string; reason: string }
   | { type: 'error'; message: string };

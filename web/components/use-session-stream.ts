@@ -8,6 +8,7 @@ import type {
   VerificationResult,
   JudgeDecision,
   AgentName,
+  SessionMeta,
   ThinkingEntry
 } from '@/lib/types';
 
@@ -21,6 +22,8 @@ export interface SessionStreamState {
   thinking: ThinkingEntry[];
   activeAgent: AgentName | null;
   status: 'connecting' | 'live' | 'closed';
+  /** 执行元信息(降级/证据标注),L4 */
+  meta: SessionMeta | null;
 }
 
 export interface SessionStreamSeed {
@@ -30,6 +33,7 @@ export interface SessionStreamSeed {
   judge: JudgeDecision | null;
   thinking: ThinkingEntry[];
   metrics?: Array<{ ts: number; rps: number; blocked: number }>;
+  meta?: SessionMeta | null;
 }
 
 function reduce(state: SessionStreamState, ev: SSEEvent): SessionStreamState {
@@ -57,6 +61,9 @@ function reduce(state: SessionStreamState, ev: SSEEvent): SessionStreamState {
     case 'judge.decision':
       next.judge = ev.decision;
       next.activeAgent = null;
+      break;
+    case 'session.meta':
+      next.meta = ev.meta;
       break;
     case 'attack.metric':
       next.metrics = [...state.metrics, { ts: ev.ts, rps: ev.rps, blocked: ev.blocked }];
@@ -104,6 +111,7 @@ export function useSessionStream(
     metrics: seed.metrics ?? [],
     thinking: seed.thinking,
     activeAgent: null,
+    meta: seed.meta ?? null,
     // live=true → 等待 SSE 连接; live=false → 已完成,直接显示
     status: live ? 'connecting' : 'closed'
   }));
@@ -224,6 +232,10 @@ export function useSessionStream(
             next.activeAgent = null;
           } else if (next.status === 'connecting') {
             next.status = 'live';
+          }
+          // 解析 meta(降级/证据标注)—— 可能由 SSE 或轮询任一途径更新
+          if (raw.session && (raw.session as { meta?: SessionMeta | null }).meta) {
+            next.meta = (raw.session as { meta?: SessionMeta | null }).meta ?? null;
           }
 
           return next;

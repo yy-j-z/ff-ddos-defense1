@@ -29,6 +29,21 @@ function buildReport(detail: Awaited<ReturnType<typeof getSessionDetail>>): stri
   lines.push(`**创建时间**: ${detail.createdAt}`);
   lines.push(`**状态**: ${detail.status === 'completed' ? '防御有效 ✅' : detail.status === 'failed' ? '防御失效 ❌' : detail.status}`);
   lines.push(`**最大回合**: ${detail.maxRounds}`);
+  // L4: 证据完整性标注 —— 走了降级路径时醒目标注,杜绝"看起来通过"
+  if (detail.meta) {
+    const m = detail.meta;
+    const metaNotes: string[] = [];
+    if (m.llmMode === 'mock') metaNotes.push('全程 mock 模式(LLM 未接入)');
+    if (m.llmMode === 'mixed') metaNotes.push('部分 Agent 走降级(mock/fallback)');
+    if (m.attackMode === 'mock') metaNotes.push('攻击执行走 mock(队列/Worker 不可用)');
+    if (m.pcapStatus === 'failed') metaNotes.push('PCAP 解析失败,业务画像基于占位摘要');
+    if (m.evidenceIncomplete) metaNotes.push('存在证据不完整的回合(防御日志缺失/读取失败)');
+    if (m.fallbackCount > 0) metaNotes.push(`降级/回退 ${m.fallbackCount} 次`);
+    if (metaNotes.length > 0) {
+      lines.push(`> ⚠️ **执行降级提示**: ${metaNotes.join('；')}。本报告部分结论基于降级数据,仅供演示参考。`);
+      lines.push('');
+    }
+  }
   lines.push('');
 
   // ── 业务画像 ──
@@ -117,6 +132,9 @@ function buildReport(detail: Awaited<ReturnType<typeof getSessionDetail>>): stri
         lines.push(`| 命中规则 | ${ver.defenderRulesHit.join(', ')} |`);
       }
       lines.push(`| 业务影响 | ${ver.businessImpact} |`);
+      if (ver.logStatus && ver.logStatus !== 'ok') {
+        lines.push(`| ⚠️ 防御日志 | 读取失败(status=${ver.logStatus}),证据不完整,本回合得分仅供参考 |`);
+      }
     }
 
     lines.push('');

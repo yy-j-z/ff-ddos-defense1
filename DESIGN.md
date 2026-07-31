@@ -75,13 +75,13 @@
 | 模块 | 技术 | 职责 |
 |---|---|---|
 | **Web/控制台** | Next.js 15 + Tailwind | 任务管理、可视化、SSE 推送 |
-| **Orchestrator** | 自研状态机(`lib/orchestrator/graph.ts`) | 协调 Agent 执行流、Scope 校验、事件总线 |
+| **Orchestrator** | 自研状态机(`lib/orchestrator/graph.ts`) | 协调 Agent 执行流、Scope 校验、事件总线、会话 meta 追踪 |
 | **Analyzer Agent** | openai SDK + DeepSeek v4-flash | 解读 PCAP 摘要,产出业务画像 |
 | **Attacker Agent** | openai SDK + DeepSeek v4-flash | 生成参数化攻击剧本 (Playbook) |
-| **Verifier Agent** | 规则引擎(无 LLM) | 评估攻击效果与防御响应、读防御日志 |
+| **Verifier Agent** | 规则引擎(无 LLM) | 评估攻击效果与防御响应、读防御日志、证据状态判定 |
 | **Judge Agent** | DeepSeek v4-pro + thinking | 综合评分、决策下一轮动作 |
 | **PCAP Analyzer** | Python FastAPI + Scapy | PCAP 解析,产出结构化摘要 |
-| **Attacker Worker** | Python + httpx/socket | 按 Playbook 执行 slowloris/http_flood/syn_flood |
+| **Attacker Worker** | Python + httpx/socket | 按 Playbook 执行 slowloris/http_flood/syn_flood/hulk/slow_headers |
 | **Target** | nginx(catch-all 200) | 受保护的靶机 |
 | **Defender** | OpenResty + Lua | 限流 + UA 黑名单,JSON 命中日志 |
 | **LLM 解析** | jsonrepair + Zod | 宽容解析 LLM JSON,整数字段自动取整 |
@@ -167,9 +167,13 @@ expected_bypass: "limit by IP rate, since each conn is low-volume"
   defenderTriggered: true,
   defenderLatencyMs: 8500,   // 清洗触发耗时
   businessImpact: "high",
-  score: 72                  // 综合绕过得分 0-100
+  score: 72,                 // 综合绕过得分 0-100
+  logStatus: "ok",           // 防御日志证据状态: ok / missing / error
+  evidenceComplete: true     // 证据是否完整(日志缺失/LLM降级时=false)
 }
 ```
+
+> 评分逻辑(2026-07 修正): 绕过分仅在"防御日志证据完整 且 未触发 且 (有基线时)攻击延迟显著劣化"时才成立;日志读取失败 ≠ 防御未触发,不给予绕过分。
 
 ---
 
@@ -177,37 +181,38 @@ expected_bypass: "limit by IP rate, since each conn is low-volume"
 
 ### 4.1 Analyzer Agent
 
-- **模型**: Claude Sonnet 4.6
-- **输入预处理**: PCAP → Zeek/Scapy → 结构化摘要 (避免直接喂原始包给 LLM)
-- **输出**: 用 Vercel AI SDK 的 `generateObject` + Zod Schema 约束
+- **模型**: DeepSeek v4-flash (openai SDK)
+- **输入预处理**: PCAP → Python Scapy 服务 → 结构化摘要 (避免直接喂原始包给 LLM)
+- **输出**: 用 `generateObject` + Zod Schema 约束
 - **关键 Prompt 设计**: 强调"提取可被攻击者利用的业务特征",而非通用流量统计
+- **降级**: LLM 失败时回退 MOCK_PROFILE,并在会话 meta 中显式标注 fallback
 
 ### 4.2 Attacker Agent
 
-- **模型**: Claude Sonnet 4.6 (代码/配置生成)
+- **模型**: DeepSeek v4-flash (openai SDK)
 - **工具**:
-  - `searchPlaybookDB(intent, profile)`: 向量检索相似场景历史剧本
-  - `getDefenderKnowledge(mechanism)`: 查询已知防御机制 KB
+  - `searchSimilarPlaybooks(vec)`: 向量检索相似场景历史剧本 (pgvector)
 - **输出约束**: 必须是符合 Schema 的 Playbook,不允许返回任意代码
-- **多样性策略**: temperature=0.8,鼓励探索新组合
+- **多样性策略**: temperature 较高,鼓励探索新组合
 
 ### 4.3 Verifier Agent
 
 - **不使用 LLM**,纯规则引擎
 - **数据源**:
-  - 拨测: 简易 HTTP probe (Next.js API 内置)
-  - 靶机指标: Docker stats / nginx access log
-  - 防御侧: 解析模拟防御组件的日志
-- **输出**: 多维度评分 + 原始指标
+  - 攻击执行结果 (Redis BullMQ job result)
+  - 防御日志: 解析 defender 容器的 /var/log/defender.log (JSON 行)
+  - 基线延迟: 攻击前良性探测 (L1 最小版)
+- **输出**: 多维度评分 + 证据状态 (logStatus / evidenceComplete)
 
 ### 4.4 Judge Agent
 
-- **模型**: Claude Opus 4.7 (启用 extended thinking)
+- **模型**: DeepSeek v4-pro (启用 extended thinking)
 - **职责**:
   1. 制定本轮攻击意图
-  2. 评分上一轮结果
+  2. 评估上一轮结果
   3. 决定继续/调整/终止
 - **状态保持**: 整个 Session 的历史保留在 context,便于跨回合推理
+- **降级**: 失败重试一次,仍失败回退 mockJudgeDecision,并在会话 meta 中显式标注
 
 ---
 
@@ -219,15 +224,15 @@ expected_bypass: "limit by IP rate, since each conn is low-volume"
 |---|---|
 | 全栈框架 | Next.js 15 (App Router) + TypeScript |
 | UI | shadcn/ui + Tailwind + Recharts |
-| Agent SDK | Vercel AI SDK (`ai`, `@ai-sdk/anthropic`) |
-| 状态机 | LangGraph.js (或自研轻量版) |
-| LLM | Claude Sonnet 4.6 / Opus 4.7 |
+| Agent SDK | openai SDK + Zod (`generateObject`) |
+| 状态机 | 自研轻量状态机 (`web/lib/orchestrator/graph.ts`) |
+| LLM | DeepSeek v4-flash (Analyzer/Attacker) / v4-pro + thinking (Judge) |
 | ORM | Drizzle ORM |
 | 数据库 | PostgreSQL 16 + pgvector |
-| 队列 | Redis + BullMQ |
+| 队列 | Redis + BullMQ (Node 生产端) / Python 直连 Redis 消费端 |
 | 实时通信 | Server-Sent Events (SSE) |
-| PCAP 解析 | Python + Scapy + PyShark + FastAPI |
-| 攻击执行 | Python + Locust + Scapy + hping3 |
+| PCAP 解析 | Python + Scapy / PyShark + FastAPI |
+| 攻击执行 | Python + httpx/socket (slowloris/http_flood/syn_flood/hulk/slow_headers) |
 | 靶机 | nginx (Docker) |
 | 容器编排 | Docker Compose |
 
@@ -241,12 +246,14 @@ services:
   pcap-analyzer:        # Python FastAPI
   attacker-worker:      # Python Worker (隔离网络)
   target:               # nginx 靶机
-  defender:             # 模拟防御组件
+  defender:             # OpenResty + Lua 防御(限流/UA黑名单)
 
 networks:
   app-net:              # web/db/redis
-  attack-net:           # attacker ↔ defender ↔ target (隔离)
+  attack-net:           # attacker ↔ defender ↔ target (隔离, internal)
 ```
+
+> 注: 仓库另有 `services/collector/`(pyshark/scapy 抓包 + agent_loop),为本地/旁路采集实验组件,未包含在 docker-compose 部署中。
 
 ---
 
@@ -314,23 +321,24 @@ ff/
 ```typescript
 // 会话
 sessions: {
-  id, name, status, scope: jsonb, budget, createdAt
+  id, name, status, scope: jsonb, pcap_path, meta: jsonb, createdAt, updatedAt
 }
 
 // 业务画像 (Analyzer 输出)
 profiles: {
-  id, sessionId, data: jsonb, embedding: vector(1536)
+  id, sessionId, data: jsonb, embedding: vector(1024), createdAt
 }
 
 // 攻击剧本
 playbooks: {
-  id, sessionId, round, intent, yaml: text,
-  embedding: vector(1536), score: int, createdAt
+  id, sessionId, round, intent, strategy, yaml: text, data: jsonb,
+  embedding: vector(1024), score: int, createdAt
 }
 
 // 验证结果
 verifications: {
-  id, playbookId, metrics: jsonb, score, defenderTriggered
+  id, playbookId, reachability, defenderTriggered, defenderLatencyMs,
+  score, metrics: jsonb (含 logStatus/evidenceComplete), createdAt
 }
 
 // Agent 推理 trace (供 UI 展示)
@@ -383,7 +391,7 @@ agent_traces: {
 - **右面板**: Verifier 评分仪表盘 + Judge 推理过程
 
 ### 9.2 Agent 推理透明化
-- 利用 Claude extended thinking,把 Judge 的决策过程展示出来
+- 利用 DeepSeek extended thinking,把 Judge 的决策过程展示出来
 - 每个 Agent 的输入/输出/耗时可点击查看
 
 ### 9.3 闭环优化演示
@@ -416,9 +424,9 @@ agent_traces: {
 
 | 风险 | 缓解措施 |
 |---|---|
-| LLM 输出不稳定 | Zod Schema 强约束 + 失败重试 + Sonnet/Opus 降级 |
+| LLM 输出不稳定 | Zod Schema 强约束 + 失败重试 + DeepSeek flash/pro 分级 + 显式降级标注 |
 | 攻击流量外泄 | Docker 网络隔离 + Scope 白名单 + 防火墙规则 |
-| Demo 时 API 限流 | 预生成关键 Agent 响应作为 fallback |
+| Demo 时 API 限流 | 预生成关键 Agent 响应作为 fallback,会话 meta 醒目标注降级 |
 | 演示环境复杂度 | docker-compose 一键启动,准备演示录屏作为备份 |
 
 ---

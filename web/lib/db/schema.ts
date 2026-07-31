@@ -6,6 +6,8 @@ export const sessions = pgTable('sessions', {
   status: text('status').notNull().default('pending'),
   scope: jsonb('scope').notNull(),
   pcapPath: text('pcap_path'),
+  /** 执行元信息: llm_mode / pcap_status / fallback_count / attack_mode / evidence_incomplete */
+  meta: jsonb('meta'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull()
 });

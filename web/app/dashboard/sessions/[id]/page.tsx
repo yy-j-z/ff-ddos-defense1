@@ -24,7 +24,8 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         verifications: detail.verifications,
         judge: detail.judge,
         thinking: detail.thinking,
-        metrics: detail.metrics
+        metrics: detail.metrics,
+        meta: detail.meta
       }}
     />
   );

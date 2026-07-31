@@ -61,6 +61,8 @@ export interface SessionDetail {
   thinking: ThinkingEntry[];
   judge: JudgeDecision | null;
   metrics: Array<{ ts: number; rps: number; blocked: number }>;
+  /** 执行元信息(降级/证据标注),L4 */
+  meta: import('@/lib/types').SessionMeta | null;
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -116,7 +118,8 @@ export async function getSessionDetail(id: string): Promise<SessionDetail | null
     verifications: verRows.map((v) => v.metrics as VerificationResult),
     thinking,
     judge,
-    metrics
+    metrics,
+    meta: (session.meta as import('@/lib/types').SessionMeta | null | undefined) ?? null
   };
 }
 

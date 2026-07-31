@@ -25,6 +25,7 @@ import type {
   JudgeDecision,
   Scope,
   SSEEvent,
+  SessionMeta,
   VerificationResult,
   AgentName
 } from '../types';
@@ -52,19 +53,37 @@ interface RunSessionOpts {
 // ─────────────────────────────────────────────────────────────
 // PCAP Analyzer 调用
 // ─────────────────────────────────────────────────────────────
-async function callPcapAnalyzer(buffer: Buffer, filename = 'capture.pcap'): Promise<unknown> {
+interface PcapAnalyzerOut {
+  status: 'ok' | 'failed';
+  summary: unknown;
+  error?: string;
+}
+
+async function callPcapAnalyzer(buffer: Buffer, filename = 'capture.pcap'): Promise<PcapAnalyzerOut> {
   const url = (process.env.ANALYZER_URL ?? process.env.PCAP_ANALYZER_URL ?? 'http://pcap-analyzer:8001') + '/analyze';
   try {
     const form = new FormData();
     form.append('file', new Blob([new Uint8Array(buffer)], { type: 'application/octet-stream' }), filename);
     const resp = await fetch(url, { method: 'POST', body: form });
     if (!resp.ok) throw new Error(`pcap-analyzer ${resp.status}`);
-    return await resp.json();
+    const json = (await resp.json()) as Record<string, unknown>;
+    // H1 修复: 服务内部异常(如 Scapy_Exception)仍可能返回 200 —— 必须识别并标记失败,
+    // 否则业务画像会基于错误信息 + LLM 推断重构,报告却毫无完整性标记。
+    const note = typeof json.note === 'string' ? json.note : '';
+    if (json.error || /exception|error|unreachable|stub summary/i.test(note)) {
+      console.warn('[orchestrator] pcap-analyzer 内部异常(200 但含错误):', note.slice(0, 120));
+      return { status: 'failed', summary: json, error: note.slice(0, 200) };
+    }
+    return { status: 'ok', summary: json };
   } catch (err) {
     console.warn('[orchestrator] pcap-analyzer 不可达,使用最小占位摘要:', (err as Error).message);
     return {
-      note: 'pcap-analyzer unreachable, using stub summary',
-      packets: 0
+      status: 'failed',
+      summary: {
+        note: 'pcap-analyzer unreachable, using stub summary',
+        packets: 0
+      },
+      error: (err as Error).message.slice(0, 200)
     };
   }
 }
@@ -167,10 +186,22 @@ function parseUtime(s: string): number {
   return Number.isFinite(t) ? t : NaN;
 }
 
-function readDefenderLogs(sinceTs?: number): string[] {
+interface DefenderLogRead {
+  status: 'ok' | 'missing' | 'error';
+  lines: string[];
+}
+
+function readDefenderLogs(sinceTs?: number): DefenderLogRead {
   const logPath = process.env.DEFENDER_LOG_PATH ?? '/var/log/defender/defender.log';
+  let content: string;
   try {
-    const content = readFileSync(logPath, 'utf8');
+    content = readFileSync(logPath, 'utf8');
+  } catch (err) {
+    // 读不到日志(卷未挂载/文件尚未生成)= 证据缺失,绝不是"防御未触发"
+    console.warn('[orchestrator] 读取防御日志失败(按证据缺失处理):', (err as Error).message);
+    return { status: 'error', lines: [] };
+  }
+  try {
     const lines = content
       .split('\n')
       .map((l) => l.trim())
@@ -188,12 +219,41 @@ function readDefenderLogs(sinceTs?: number): string[] {
         // 跳过非 JSON 行
       }
     }
-    return out;
+    return { status: 'ok', lines: out };
   } catch (err) {
-    // 读不到日志(卷未挂载/文件尚未生成)= 视为防御未触发,绝不回退到假数据
-    console.warn('[orchestrator] 读取防御日志失败(按未触发处理):', (err as Error).message);
-    return [];
+    console.warn('[orchestrator] 解析防御日志失败(按证据缺失处理):', (err as Error).message);
+    return { status: 'error', lines: [] };
   }
+}
+
+// ─────────────────────────────────────────────────────────────
+// 良性基线探测(L1 最小版):攻击前用合法请求测靶机基线延迟。
+// 失败返回 null —— verifier 侧会回退到"无基线"逻辑,不影响主流程。
+// ─────────────────────────────────────────────────────────────
+async function probeBaselineLatency(): Promise<number | null> {
+  const target = process.env.DEFENDER_URL ?? 'http://defender:8080';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 3000);
+  const samples: number[] = [];
+  try {
+    for (let i = 0; i < 3; i++) {
+      const start = Date.now();
+      const resp = await fetch(`${target}/`, {
+        headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0' },
+        signal: controller.signal
+      });
+      // 只要连上并拿到响应即算一次采样(HTTP 429 也说明靶机活着)
+      if (resp) samples.push(Date.now() - start);
+      await new Promise((r) => setTimeout(r, 100));
+    }
+  } catch (err) {
+    console.warn('[orchestrator] 基线探测失败(按无基线处理):', (err as Error).message.slice(0, 100));
+    return null;
+  } finally {
+    clearTimeout(timer);
+  }
+  if (samples.length === 0) return null;
+  return Math.round(samples.reduce((a, b) => a + b, 0) / samples.length);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -205,10 +265,32 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
   // 标记 running
   await db.update(sessions).set({ status: 'running', updatedAt: new Date() }).where(eq(sessions.id, sessionId)).catch(() => {});
 
+  // ── 会话级执行元信息追踪(L4 显式降级标注) ──
+  const meta: SessionMeta = {
+    llmMode: 'real',
+    pcapStatus: 'ok',
+    fallbackCount: 0,
+    attackMode: 'real',
+    evidenceIncomplete: false
+  };
+  const bumpFallback = (reason: string) => {
+    meta.fallbackCount += 1;
+    console.warn(`[orchestrator] fallback #${meta.fallbackCount}: ${reason}`);
+  };
+  const setEvidenceIncomplete = () => {
+    meta.evidenceIncomplete = true;
+  };
+
   yield { type: 'session.started', sessionId };
 
   // === 1) PCAP 摘要 ===
-  const pcapSummary = await callPcapAnalyzer(pcapBuffer, pcapFilename);
+  const pcapOut = await callPcapAnalyzer(pcapBuffer, pcapFilename);
+  if (pcapOut.status === 'failed') {
+    meta.pcapStatus = 'failed';
+    bumpFallback(`PCAP 解析失败: ${pcapOut.error ?? 'unknown'}`);
+    setEvidenceIncomplete();
+  }
+  const pcapSummary = pcapOut.summary;
 
   // === 2) Analyzer Agent ===
   yield { type: 'agent.start', agent: 'analyzer', round: 0 };
@@ -220,6 +302,13 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
     () => runAnalyzer({ pcapSummary: pcapSummary as object | string }),
     (r) => r.profile
   );
+  if (analyzerOut.thinking && analyzerOut.thinking.startsWith('fallback')) {
+    bumpFallback('Analyzer LLM 失败,降级到 mock profile');
+    setEvidenceIncomplete();
+  }
+  if (analyzerOut.thinking && analyzerOut.thinking.startsWith('mock mode')) {
+    meta.llmMode = 'mock';
+  }
   const profile: BusinessProfile = analyzerOut.profile;
   if (analyzerOut.thinking) {
     yield { type: 'agent.thinking', agent: 'analyzer', round: 0, chunk: analyzerOut.thinking };
@@ -343,7 +432,10 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
 
     try {
       if (isMockMode() || !process.env.REDIS_URL) {
-        // 直接 mock —— 用真实防御日志构建结果,使得分合理
+        // 直接 mock —— 显式标注,绝不静默
+        meta.attackMode = 'mock';
+        bumpFallback('攻击执行走 mock(isMockMode 或 Redis 不可用)');
+        setEvidenceIncomplete();
         // Mock 攻击期间也推真实间隔的指标
         const mockDuration = Math.min(5000, playbook.parameters.durationSec * 100);
         const interval = 1000;
@@ -366,6 +458,10 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
           jobResult = await waitForAttack(jobId, playbook.parameters.durationSec * 1000 + 30000);
         } catch (err) {
           console.warn('[queue] 执行失败,使用 mock', err);
+          // 队列/Worker 失败 → 显式标注,绝不静默
+          meta.attackMode = 'mock';
+          bumpFallback(`攻击队列执行失败: ${(err as Error).message.slice(0, 120)}`);
+          setEvidenceIncomplete();
           // mock 期间也推实时指标
           const mockDuration2 = 3000;
           const interval2 = 1000;
@@ -402,14 +498,26 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
 
     // ─── 3.3 Verifier 评分 ───
     yield { type: 'agent.start', agent: 'verifier', round };
-    const defenderLogs = readDefenderLogs(Date.parse(jobResult.startedAt));
+    const defenderLogRead = readDefenderLogs(Date.parse(jobResult.startedAt));
+    // L1 最小版:每轮攻击前探测良性基线延迟,供 verifier 判断"未触发"是否为真实绕过
+    const baselineLatencyMs = await probeBaselineLatency();
+    if (defenderLogRead.status !== 'ok') {
+      meta.evidenceIncomplete = true;
+      bumpFallback(`防御日志读取失败(status=${defenderLogRead.status}),本轮证据不完整`);
+    }
     const verifierResult = await withTrace(
       sessionId,
       round,
       'verifier',
-      { playbookId: playbook.id, jobResult, defenderLogs },
+      { playbookId: playbook.id, jobResult, defenderLogs: defenderLogRead.lines },
       async () => {
-        const result = await runVerifier({ playbook, jobResult, defenderLogs });
+        const result = await runVerifier({
+          playbook,
+          jobResult,
+          defenderLogs: defenderLogRead.lines,
+          defenderLogStatus: defenderLogRead.status,
+          baselineLatencyMs
+        });
         return { thinking: undefined as string | undefined, ...result };
       },
       (r) => {
@@ -427,8 +535,13 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
       totalRequests: verifierResult.totalRequests,
       blockedRequests: verifierResult.blockedRequests,
       businessImpact: verifierResult.businessImpact,
-      score: verifierResult.score
+      score: verifierResult.score,
+      logStatus: verifierResult.logStatus,
+      evidenceComplete: verifierResult.evidenceComplete
     };
+    if (!verification.evidenceComplete) {
+      meta.evidenceIncomplete = true;
+    }
     yield { type: 'agent.done', agent: 'verifier', round, output: verification };
     yield { type: 'verification.done', result: verification };
 
@@ -452,8 +565,9 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
         .catch(() => {});
 
     // ─── RAG: 成功策略生成向量存库 ───
-    // 得分 >= 50 且在 RAG 搜索中未出现过（避免重复存储）
-    if (playbookRowId && verification.score >= 50) {
+    // D7 净化: 得分 >= 50 且证据完整(非 mock、非日志缺失、非降级)且未出现过,才入库。
+    // 否则 mock/fallback 的"假高分"会污染知识库并反哺后续攻击选型(RAG 投毒)。
+    if (playbookRowId && verification.score >= 50 && verification.evidenceComplete && meta.attackMode === 'real' && meta.llmMode !== 'mock') {
       const alreadyInRag = ragPlaybooks.some((r) => r.playbook.id === playbook.id);
       if (!alreadyInRag) {
         embedText(playbookToEmbeddingText(playbook)).then((vec) => {
@@ -480,6 +594,13 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
       () => runJudge({ profile, history, round, maxRounds }),
       (r) => r.decision
     );
+    if (judgeOut.thinking && judgeOut.thinking.startsWith('fallback')) {
+      bumpFallback('Judge LLM 失败,降级到 mock 决策');
+      setEvidenceIncomplete();
+    }
+    if (judgeOut.thinking && judgeOut.thinking.startsWith('mock mode')) {
+      meta.llmMode = 'mock';
+    }
     const decision = judgeOut.decision;
     if (judgeOut.thinking) {
       yield { type: 'agent.thinking', agent: 'judge', round, chunk: judgeOut.thinking };
@@ -501,7 +622,18 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
   // 攻击未绕过(verdict=failed)=防御有效→标绿(completed)。与 judge-panel 的标签口径一致。
   const finalStatus =
     finalVerdict === 'stop' ? 'stopped' : finalVerdict === 'success' ? 'failed' : 'completed';
-  await db.update(sessions).set({ status: finalStatus, updatedAt: new Date() }).where(eq(sessions.id, sessionId)).catch(() => {});
+
+  // ── 收尾: 推导最终 llmMode 并落库 meta(L4) ──
+  if (meta.fallbackCount > 0 && meta.llmMode === 'real') {
+    // 发生过降级但主体是真实 LLM → mixed;若全程 mock 则保持 mock
+    meta.llmMode = 'mixed';
+  }
+  await db
+    .update(sessions)
+    .set({ status: finalStatus, meta: meta as unknown as object, updatedAt: new Date() })
+    .where(eq(sessions.id, sessionId))
+    .catch(() => {});
+  yield { type: 'session.meta', meta };
 
   if (finalStatus === 'stopped') {
     yield { type: 'session.stopped', sessionId, reason: 'judge requested stop' };
@@ -525,7 +657,11 @@ export function runSessionInBackground(opts: RunSessionOpts): void {
       });
       await db
         .update(sessions)
-        .set({ status: 'failed', updatedAt: new Date() })
+        .set({
+          status: 'failed',
+          meta: { llmMode: 'mixed', pcapStatus: 'failed', fallbackCount: -1, attackMode: 'mock', evidenceIncomplete: true } as unknown as object,
+          updatedAt: new Date()
+        })
         .where(eq(sessions.id, opts.sessionId))
         .catch(() => {});
     }

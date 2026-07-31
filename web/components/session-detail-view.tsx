@@ -8,6 +8,7 @@ import { AttackChart } from '@/components/attack-chart';
 import { AgentThinking } from '@/components/agent-thinking';
 import { VerifierGauge } from '@/components/verifier-gauge';
 import { JudgePanel } from '@/components/judge-panel';
+import type { SessionMeta } from '@/lib/types';
 import { cn } from '@/lib/utils';
 import { useSessionStream, type SessionStreamSeed } from '@/components/use-session-stream';
 
@@ -124,6 +125,9 @@ export function SessionDetailView({
           </div>
         </div>
       </header>
+
+      {/* 证据/降级警示条(L4 显式标注) —— 任一降级或证据缺失时醒目标注 */}
+      <EvidenceBanner meta={stream.meta} />
 
       {/* 主体 */}
       <div className="scroll-quiet min-h-0 flex-1 overflow-y-auto px-8 py-6 lg:overflow-hidden">
@@ -242,5 +246,48 @@ function Legend({ color, label }: { color: string; label: string }) {
       <span className="h-0.5 w-3 rounded-full" style={{ background: color }} />
       {label}
     </span>
+  );
+}
+
+/**
+ * 证据/降级警示条(L4) —— 本会话若走了任何降级路径(mock/fallback/日志缺失/PCAP失败),
+ * 在此醒目标注。正常会话不渲染(不打扰),异常会话一目了然,杜绝"看起来通过"。
+ */
+function EvidenceBanner({ meta }: { meta: SessionMeta | null }) {
+  if (!meta) return null;
+  const issues: string[] = [];
+  if (meta.llmMode === 'mock') issues.push('全程 mock 模式(LLM 未接入)');
+  if (meta.llmMode === 'mixed') issues.push('部分 Agent 走了降级(mock/fallback)');
+  if (meta.attackMode === 'mock') issues.push('攻击执行走 mock(队列/Worker 不可用)');
+  if (meta.pcapStatus === 'failed') issues.push('PCAP 解析失败,业务画像基于占位摘要');
+  if (meta.evidenceIncomplete) issues.push('存在证据不完整的回合(日志缺失/读取失败)');
+  if (meta.fallbackCount > 0) issues.push(`降级/回退 ${meta.fallbackCount} 次`);
+  if (issues.length === 0) return null;
+
+  return (
+    <div className="shrink-0 border-b px-8 py-2" style={{ background: '#2a1205', borderColor: '#7c2d12' }}>
+      <div className="mx-auto flex max-w-5xl items-start gap-2 text-[11px] leading-relaxed text-amber-400">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          width="13"
+          height="13"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          className="mt-0.5 shrink-0"
+        >
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z" />
+          <path d="M12 9v4" />
+          <path d="M12 17h.01" />
+        </svg>
+        <div>
+          <span className="font-semibold text-amber-300">执行降级提示：</span>
+          {issues.join('；')}。本轮结果仅供演示，不代表真实防御能力结论。
+        </div>
+      </div>
+    </div>
   );
 }
