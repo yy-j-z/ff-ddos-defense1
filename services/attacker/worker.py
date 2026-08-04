@@ -148,7 +148,15 @@ async def run_playbook(job_data: Dict[str, Any]) -> Dict[str, Any]:
     started = datetime.now(timezone.utc)
     sampler_task = asyncio.create_task(metrics.sampler())
     try:
-        await runner(playbook, metrics)
+        # 最终兜底: 策略内部即使还有未覆盖的挂起点(如底层库卡死),
+        # worker 也必须在 durationSec + 30s 内强制收尾, 绝不无限挂起。
+        # 这样 web 端 waitForAttack 总能拿到真实结果(而非空等后转 mock)。
+        run_timeout = float(playbook.get("parameters", {}).get("durationSec", 30)) + 30.0
+        try:
+            await asyncio.wait_for(runner(playbook, metrics), timeout=run_timeout)
+        except asyncio.TimeoutError:
+            log.error("strategy timed out after %.0fs, forcing finish", run_timeout)
+            metrics.record(error=True)
     except Exception as exc:  # noqa: BLE001
         log.error("strategy crashed: %s\n%s", exc, traceback.format_exc())
         metrics.record(error=True)

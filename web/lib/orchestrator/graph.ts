@@ -455,7 +455,9 @@ export async function* runSession(opts: RunSessionOpts): AsyncIterable<SSEEvent>
         try {
           const jobId = await enqueueAttack({ sessionId, playbook });
           // 等待攻击执行期间,实时指标由 Worker 推送 + 后台任务兜底
-          jobResult = await waitForAttack(jobId, playbook.parameters.durationSec * 1000 + 30000);
+          // 超时 = durationSec + 45s: worker 端兜底是 durationSec+30s, 留 15s 缓冲,
+          // 确保拿到 worker 的真实结果而非因时序巧合转 mock。
+          jobResult = await waitForAttack(jobId, playbook.parameters.durationSec * 1000 + 45000);
         } catch (err) {
           console.warn('[queue] 执行失败,使用 mock', err);
           // 队列/Worker 失败 → 显式标注,绝不静默

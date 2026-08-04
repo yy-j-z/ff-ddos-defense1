@@ -27,6 +27,9 @@ services:
       - defender-logs:/var/log/defender:ro
     networks:
       - app-net
+      # 加入 attack-net 以便基线探测(probeBaselineLatency)访问 defender:8080;
+      # 仅用于发送良性请求测延迟,攻击流量仍只由 attacker-worker 在 attack-net 内发起。
+      - attack-net
 
   postgres:
     image: pgvector/pgvector:pg16

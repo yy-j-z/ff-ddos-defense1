@@ -14,7 +14,7 @@ const statusMeta: Record<
   pending: { label: '等待中', variant: 'neutral' },
   running: { label: '运行中', variant: 'info' },
   completed: { label: '防御有效', variant: 'success' },
-  failed: { label: '防御失效', variant: 'danger' },
+  failed: { label: '发现防御盲区', variant: 'danger' },
   stopped: { label: '已停止', variant: 'warning' }
 };
 

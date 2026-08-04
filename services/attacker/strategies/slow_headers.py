@@ -78,12 +78,13 @@ async def _hold_slow(
         chunks = _build_initial_chunks(endpoint, host_header, user_agent)
 
         # Send each byte slowly
+        # 修复: sock_sendall 无超时可能无限挂起(缓冲区满) → 每字节发送加 5s 硬超时
         for chunk in chunks:
             if time.time() >= deadline:
                 break
             try:
-                await loop.sock_sendall(sock, chunk)
-            except OSError:
+                await asyncio.wait_for(loop.sock_sendall(sock, chunk), timeout=5.0)
+            except (asyncio.TimeoutError, OSError):
                 metrics.record(error=True, latency_ms=(time.perf_counter() - t0) * 1000.0)
                 return
             await asyncio.sleep(byte_delay)
@@ -102,12 +103,13 @@ async def _hold_slow(
         metrics.record(success=True, latency_ms=(time.perf_counter() - t0) * 1000.0)
 
         # Keep connection alive until deadline
+        # 修复: 与 slowloris 相同, 保活 drip 发送加 5s 硬超时, 防止缓冲区满无限挂起
         while time.time() < deadline:
             await asyncio.sleep(1.0)
             drip = f"X-Keep-{random.randint(0, 99999)}: {random.randint(0, 99999)}\r\n".encode()
             try:
-                await loop.sock_sendall(sock, drip)
-            except OSError:
+                await asyncio.wait_for(loop.sock_sendall(sock, drip), timeout=5.0)
+            except (asyncio.TimeoutError, OSError):
                 return
     finally:
         if sock is not None:

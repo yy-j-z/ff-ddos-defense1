@@ -1,7 +1,7 @@
 """FF 业务流量采集器 - Pyshark 主后端
 
 底层调用 Wireshark 的 TShark，与 Wireshark GUI 共享同一套抓包引擎。
-这就是指导老师说的「Wireshark 有 library 库，直接可以联动编程语言」的实现。
+实现说明：通过 Wireshark/TShark 的 library 接口与编程语言联动。
 """
 
 from __future__ import annotations

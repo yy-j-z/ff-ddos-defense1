@@ -30,3 +30,7 @@ build/
 ## IDE
 .vscode/
 .idea/
+.claude/
+
+## 构建缓存（含哈希数字，易被误判为手机号/身份证）
+*.tsbuildinfo

@@ -76,12 +76,14 @@ async def _hold_connection(
             pass
 
         # Drip partial header every interval until deadline
+        # 修复: sock_sendall 在 TCP 缓冲区满时可能无限挂起(gather 永不返回 → worker 卡死)
+        # 每次发送加 5s 硬超时, 超时则放弃该连接, 保证 run() 一定在 deadline 附近返回。
         while time.time() < deadline:
             await asyncio.sleep(interval_s)
             drip = f"X-Pad-{random.randint(0, 99999)}: {random.randint(0, 99999)}\r\n".encode()
             try:
-                await loop.sock_sendall(sock, drip)
-            except OSError:
+                await asyncio.wait_for(loop.sock_sendall(sock, drip), timeout=5.0)
+            except (asyncio.TimeoutError, OSError):
                 metrics.record(error=True)
                 return
     finally:

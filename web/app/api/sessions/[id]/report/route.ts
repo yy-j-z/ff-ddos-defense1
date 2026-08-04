@@ -27,7 +27,7 @@ function buildReport(detail: Awaited<ReturnType<typeof getSessionDetail>>): stri
   lines.push(sep);
   lines.push(`**会话名称**: ${detail.name}`);
   lines.push(`**创建时间**: ${detail.createdAt}`);
-  lines.push(`**状态**: ${detail.status === 'completed' ? '防御有效 ✅' : detail.status === 'failed' ? '防御失效 ❌' : detail.status}`);
+  lines.push(`**状态**: ${detail.status === 'completed' ? '防御有效 ✅' : detail.status === 'failed' ? '检测结论：发现防御盲区（攻击已绕过）⚠️' : detail.status}`);
   lines.push(`**最大回合**: ${detail.maxRounds}`);
   // L4: 证据完整性标注 —— 走了降级路径时醒目标注,杜绝"看起来通过"
   if (detail.meta) {

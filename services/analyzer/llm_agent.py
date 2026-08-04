@@ -1,6 +1,6 @@
 """LLM 推理层 — 将 BusinessProfile 送给大模型做二次推理。
 
-这就是指导老师问的「怎么对接到大模型的」的答案：
+模块说明（PCAP 如何对接大模型）：
   1. Scapy 解析 PCAP → 结构化 BusinessProfile（parser.py，已实现）
   2. BusinessProfile JSON → LLM 推理 → 威胁研判 + 防御建议（本模块）
   3. LLM 输出 → Agent 调度循环 → 自动响应（agent_loop.py）
