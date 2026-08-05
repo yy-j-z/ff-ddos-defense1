@@ -45,14 +45,6 @@ export function Sidebar() {
         borderColor: '#1f2937'
       }}
     >
-      {/* 扫描线动画 */}
-      <div
-        className="absolute left-0 right-0 h-px pointer-events-none"
-        style={{
-          background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
-          animation: 'scan-line 4s linear infinite'
-        }}
-      />
 
       {/* Logo 区 */}
       <div className="flex h-14 items-center gap-2 border-b px-5" style={{ borderColor: '#1f2937' }}>

@@ -54,7 +54,7 @@ export function SessionDetailView({
         }}
       />
 
-      {/* 固定页头：暗色背景 + 底部扫描线 */}
+      {/* 固定页头：暗色背景 */}
       <header
         className="shrink-0 border-b px-8 pb-5 pt-6 relative"
         style={{
@@ -62,14 +62,6 @@ export function SessionDetailView({
           borderColor: '#1f2937'
         }}
       >
-        {/* 扫描光线 */}
-        <div
-          className="absolute left-0 right-0 h-px"
-          style={{
-            background: 'linear-gradient(90deg, transparent, #06b6d4, transparent)',
-            animation: 'scan-line 4s linear infinite'
-          }}
-        />
 
         <div className="mx-auto max-w-5xl space-y-3 relative z-10">
           <nav className="flex items-center gap-1.5 text-xs text-slate-500">
@@ -117,7 +109,7 @@ export function SessionDetailView({
               </a>
               <Stat label="当前回合" value={`${stream.playbooks.length}`} suffix={`/ ${maxRounds}`} />
               <Stat
-                label="最佳得分"
+                label="攻击穿透分"
                 value={bestScore ? `${bestScore}` : '—'}
                 tone={bestScore >= 70 ? 'text-red-400' : undefined}
               />

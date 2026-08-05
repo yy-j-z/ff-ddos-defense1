@@ -20,7 +20,7 @@ function fmt(d: Date): string {
   return new Date(d).toISOString().slice(0, 16).replace('T', ' ');
 }
 
-/** Dashboard 列表:聚合每个会话的回合数与最佳得分 */
+/** Dashboard 列表:聚合每个会话的回合数与攻击穿透分 */
 export async function getSessionSummaries(): Promise<SessionListItem[]> {
   const [sess, pbs, vers] = await Promise.all([
     db.select().from(sessions).orderBy(desc(sessions.createdAt)).limit(100),
