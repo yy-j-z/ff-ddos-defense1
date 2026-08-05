@@ -16,4 +16,6 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 EXPOSE 3000
-CMD ["node", "server.js"]
+# -H 0.0.0.0: standalone server 默认用容器 HOSTNAME 环境变量解析监听地址,
+# 多网络(app-net+attack-net)下可能解析到非映射网段 IP,导致宿主机访问被 reset
+CMD ["node", "server.js", "-H", "0.0.0.0"]
